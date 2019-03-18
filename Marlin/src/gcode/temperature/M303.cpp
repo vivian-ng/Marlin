@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -20,10 +20,6 @@
  *
  */
 
-#include "../../inc/MarlinConfig.h"
-
-#if HAS_PID_HEATING
-
 #include "../gcode.h"
 #include "../../module/temperature.h"
 
@@ -32,40 +28,30 @@
  *
  *       S<temperature> sets the target temperature. (default 150C / 70C)
  *       E<extruder> (-1 for the bed) (default 0)
- *       C<cycles> Minimum 3. Default 5.
+ *       C<cycles>
  *       U<bool> with a non-zero value will apply the result to current settings
  */
 void GcodeSuite::M303() {
+  #if HAS_PID_HEATING
+    const int e = parser.intval('E'), c = parser.intval('C', 5);
+    const bool u = parser.boolval('U');
 
-  const int8_t e = parser.intval('E');
+    int16_t temp = parser.celsiusval('S', e < 0 ? 70 : 150);
 
-  if (!WITHIN(e, 0
-    #if ENABLED(PIDTEMPBED)
-      -1
+    if (WITHIN(e, 0, HOTENDS - 1))
+      target_extruder = e;
+
+    #if DISABLED(BUSY_WHILE_HEATING)
+      KEEPALIVE_STATE(NOT_BUSY);
     #endif
-    ,
-    #if ENABLED(PIDTEMP)
-      HOTENDS
+
+    thermalManager.PID_autotune(temp, e, c, u);
+
+    #if DISABLED(BUSY_WHILE_HEATING)
+      KEEPALIVE_STATE(IN_HANDLER);
     #endif
-    -1
-  )) {
-    SERIAL_ECHOLNPGM(MSG_PID_BAD_EXTRUDER_NUM);
-    return;
-  }
-
-  const int c = parser.intval('C', 5);
-  const bool u = parser.boolval('U');
-  const int16_t temp = parser.celsiusval('S', e < 0 ? 70 : 150);
-
-  #if DISABLED(BUSY_WHILE_HEATING)
-    KEEPALIVE_STATE(NOT_BUSY);
-  #endif
-
-  thermalManager.PID_autotune(temp, e, c, u);
-
-  #if DISABLED(BUSY_WHILE_HEATING)
-    KEEPALIVE_STATE(IN_HANDLER);
+  #else
+    SERIAL_ERROR_START();
+    SERIAL_ERRORLNPGM(MSG_ERR_M303_DISABLED);
   #endif
 }
-
-#endif // HAS_PID_HEATING

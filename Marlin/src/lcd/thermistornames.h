@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -94,16 +94,10 @@
   #define THERMISTOR_NAME "PT100 4K7"
 #elif THERMISTOR_ID == 110
   #define THERMISTOR_NAME "PT100 1K"
-#elif THERMISTOR_ID == 666
-  #define THERMISTOR_NAME "Einstart S"
 
 // High Temperature thermistors
-#elif THERMISTOR_ID == 61
-  #define THERMISTOR_NAME "Formbot 350°C"
 #elif THERMISTOR_ID == 66
   #define THERMISTOR_NAME "Dyze 4.7M"
-#elif THERMISTOR_ID == 67
-  #define THERMISTOR_NAME "SliceEng 450°C"
 
 // Dummies for dev testing
 #elif THERMISTOR_ID == 998

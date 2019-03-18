@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -35,7 +35,7 @@ void safe_delay(millis_t ms) {
   thermalManager.manage_heater(); // This keeps us safe if too many small safe_delay() calls are made
 }
 
-#if EITHER(EEPROM_SETTINGS, SD_FIRMWARE_UPDATE)
+#if ENABLED(EEPROM_SETTINGS)
 
   void crc16(uint16_t *crc, const void * const data, uint16_t cnt) {
     uint8_t *ptr = (uint8_t *)data;
@@ -46,9 +46,9 @@ void safe_delay(millis_t ms) {
     }
   }
 
-#endif // EEPROM_SETTINGS || SD_FIRMWARE_UPDATE
+#endif // EEPROM_SETTINGS
 
-#if ANY(ULTRA_LCD, DEBUG_LEVELING_FEATURE, EXTENSIBLE_UI)
+#if ENABLED(ULTRA_LCD) || ENABLED(DEBUG_LEVELING_FEATURE)
 
   char conv[8] = { 0 };
 
@@ -57,51 +57,24 @@ void safe_delay(millis_t ms) {
   #define RJDIGIT(n, f) ((n) >= (f) ? DIGIMOD(n, f) : ' ')
   #define MINUSOR(n, alt) (n >= 0 ? (alt) : (n = -n, '-'))
 
-  // Convert unsigned 8bit int to string 123 format
-  char* ui8tostr3(const uint8_t i) {
+  // Convert unsigned int to string 123 format
+  char* i8tostr3(const uint8_t i) {
     conv[4] = RJDIGIT(i, 100);
     conv[5] = RJDIGIT(i, 10);
     conv[6] = DIGIMOD(i, 1);
     return &conv[4];
   }
 
-  // Convert signed 8bit int to rj string with 123 or -12 format
-  char* i8tostr3(const int8_t x) {
-    int xx = x;
-    conv[4] = MINUSOR(xx, RJDIGIT(xx, 100));
-    conv[5] = RJDIGIT(xx, 10);
-    conv[6] = DIGIMOD(xx, 1);
+  // Convert signed int to rj string with 123 or -12 format
+  char* itostr3(int i) {
+    conv[4] = MINUSOR(i, RJDIGIT(i, 100));
+    conv[5] = RJDIGIT(i, 10);
+    conv[6] = DIGIMOD(i, 1);
     return &conv[4];
   }
 
-  // Convert unsigned 16bit int to string 123 format
-  char* ui16tostr3(const uint16_t xx) {
-    conv[4] = RJDIGIT(xx, 100);
-    conv[5] = RJDIGIT(xx, 10);
-    conv[6] = DIGIMOD(xx, 1);
-    return &conv[4];
-  }
-
-  // Convert unsigned 16bit int to string 1234 format
-  char* ui16tostr4(const uint16_t xx) {
-    conv[3] = RJDIGIT(xx, 1000);
-    conv[4] = RJDIGIT(xx, 100);
-    conv[5] = RJDIGIT(xx, 10);
-    conv[6] = DIGIMOD(xx, 1);
-    return &conv[3];
-  }
-
-  // Convert signed 16bit int to rj string with 123 or -12 format
-  char* i16tostr3(const int16_t x) {
-    int xx = x;
-    conv[4] = MINUSOR(xx, RJDIGIT(xx, 100));
-    conv[5] = RJDIGIT(xx, 10);
-    conv[6] = DIGIMOD(xx, 1);
-    return &conv[4];
-  }
-
-  // Convert unsigned 16bit int to lj string with 123 format
-  char* i16tostr3left(const int16_t i) {
+  // Convert unsigned int to lj string with 123 format
+  char* itostr3left(const int i) {
     char *str = &conv[6];
     *str = DIGIMOD(i, 1);
     if (i >= 10) {
@@ -112,8 +85,8 @@ void safe_delay(millis_t ms) {
     return str;
   }
 
-  // Convert signed 16bit int to rj string with 1234, _123, -123, _-12, or __-1 format
-  char* i16tostr4sign(const int16_t i) {
+  // Convert signed int to rj string with 1234, _123, -123, _-12, or __-1 format
+  char* itostr4sign(const int i) {
     const bool neg = i < 0;
     const int ii = neg ? -i : i;
     if (i >= 1000) {
@@ -168,7 +141,7 @@ void safe_delay(millis_t ms) {
     // Convert float to rj string with 1234, _123, -123, _-12, 12.3, _1.2, or -1.2 format
     char* ftostr4sign(const float &f) {
       const int i = (f * 100 + (f < 0 ? -5: 5)) / 10;
-      if (!WITHIN(i, -99, 999)) return i16tostr4sign((int)f);
+      if (!WITHIN(i, -99, 999)) return itostr4sign((int)f);
       const bool neg = i < 0;
       const int ii = neg ? -i : i;
       conv[3] = neg ? '-' : (ii >= 100 ? DIGIMOD(ii, 100) : ' ');
@@ -258,8 +231,7 @@ void safe_delay(millis_t ms) {
   char* ftostr52sp(const float &f) {
     long i = (f * 1000 + (f < 0 ? -5: 5)) / 10;
     uint8_t dig;
-    conv[0] = MINUSOR(i, ' ');
-    conv[1] = RJDIGIT(i, 10000);
+    conv[1] = MINUSOR(i, RJDIGIT(i, 10000));
     conv[2] = RJDIGIT(i, 1000);
     conv[3] = DIGIMOD(i, 100);
 
@@ -277,7 +249,7 @@ void safe_delay(millis_t ms) {
         conv[4] = conv[5] = ' ';
       conv[6] = ' ';
     }
-    return conv;
+    return &conv[1];
   }
 
 #endif // ULTRA_LCD
@@ -290,68 +262,62 @@ void safe_delay(millis_t ms) {
   #include "../feature/bedlevel/bedlevel.h"
 
   void log_machine_info() {
-    SERIAL_ECHOLNPGM("Machine Type: "
-      #if ENABLED(DELTA)
-        "Delta"
-      #elif IS_SCARA
-        "SCARA"
-      #elif IS_CORE
-        "Core"
-      #else
-        "Cartesian"
-      #endif
-    );
+    SERIAL_ECHOPGM("Machine Type: ");
+    #if ENABLED(DELTA)
+      SERIAL_ECHOLNPGM("Delta");
+    #elif IS_SCARA
+      SERIAL_ECHOLNPGM("SCARA");
+    #elif IS_CORE
+      SERIAL_ECHOLNPGM("Core");
+    #else
+      SERIAL_ECHOLNPGM("Cartesian");
+    #endif
 
-    SERIAL_ECHOLNPGM("Probe: "
-      #if ENABLED(PROBE_MANUALLY)
-        "PROBE_MANUALLY"
-      #elif ENABLED(FIX_MOUNTED_PROBE)
-        "FIX_MOUNTED_PROBE"
-      #elif ENABLED(BLTOUCH)
-        "BLTOUCH"
-      #elif HAS_Z_SERVO_PROBE
-        "SERVO PROBE"
-      #elif ENABLED(Z_PROBE_SLED)
-        "Z_PROBE_SLED"
-      #elif ENABLED(Z_PROBE_ALLEN_KEY)
-        "Z_PROBE_ALLEN_KEY"
-      #else
-        "NONE"
-      #endif
-    );
+    SERIAL_ECHOPGM("Probe: ");
+    #if ENABLED(PROBE_MANUALLY)
+      SERIAL_ECHOLNPGM("PROBE_MANUALLY");
+    #elif ENABLED(FIX_MOUNTED_PROBE)
+      SERIAL_ECHOLNPGM("FIX_MOUNTED_PROBE");
+    #elif ENABLED(BLTOUCH)
+      SERIAL_ECHOLNPGM("BLTOUCH");
+    #elif HAS_Z_SERVO_PROBE
+      SERIAL_ECHOLNPGM("SERVO PROBE");
+    #elif ENABLED(Z_PROBE_SLED)
+      SERIAL_ECHOLNPGM("Z_PROBE_SLED");
+    #elif ENABLED(Z_PROBE_ALLEN_KEY)
+      SERIAL_ECHOLNPGM("Z_PROBE_ALLEN_KEY");
+    #else
+      SERIAL_ECHOLNPGM("NONE");
+    #endif
 
     #if HAS_BED_PROBE
-      SERIAL_ECHOPAIR(
-        "Probe Offset X:" STRINGIFY(X_PROBE_OFFSET_FROM_EXTRUDER)
-                    " Y:" STRINGIFY(Y_PROBE_OFFSET_FROM_EXTRUDER)
-                    " Z:", zprobe_zoffset
-      );
-      if ((X_PROBE_OFFSET_FROM_EXTRUDER) > 0)
+      SERIAL_ECHOPAIR("Probe Offset X:", X_PROBE_OFFSET_FROM_EXTRUDER);
+      SERIAL_ECHOPAIR(" Y:", Y_PROBE_OFFSET_FROM_EXTRUDER);
+      SERIAL_ECHOPAIR(" Z:", zprobe_zoffset);
+      #if X_PROBE_OFFSET_FROM_EXTRUDER > 0
         SERIAL_ECHOPGM(" (Right");
-      else if ((X_PROBE_OFFSET_FROM_EXTRUDER) < 0)
+      #elif X_PROBE_OFFSET_FROM_EXTRUDER < 0
         SERIAL_ECHOPGM(" (Left");
-      else if ((Y_PROBE_OFFSET_FROM_EXTRUDER) != 0)
+      #elif Y_PROBE_OFFSET_FROM_EXTRUDER != 0
         SERIAL_ECHOPGM(" (Middle");
-      else
+      #else
         SERIAL_ECHOPGM(" (Aligned With");
-
-      if ((Y_PROBE_OFFSET_FROM_EXTRUDER) > 0) {
+      #endif
+      #if Y_PROBE_OFFSET_FROM_EXTRUDER > 0
         #if IS_SCARA
           SERIAL_ECHOPGM("-Distal");
         #else
           SERIAL_ECHOPGM("-Back");
         #endif
-      }
-      else if ((Y_PROBE_OFFSET_FROM_EXTRUDER) < 0) {
+      #elif Y_PROBE_OFFSET_FROM_EXTRUDER < 0
         #if IS_SCARA
           SERIAL_ECHOPGM("-Proximal");
         #else
           SERIAL_ECHOPGM("-Front");
         #endif
-      }
-      else if ((X_PROBE_OFFSET_FROM_EXTRUDER) != 0)
+      #elif X_PROBE_OFFSET_FROM_EXTRUDER != 0
         SERIAL_ECHOPGM("-Center");
-
+      #endif
       if (zprobe_zoffset < 0)
         SERIAL_ECHOPGM(" & Below");
       else if (zprobe_zoffset > 0)
@@ -361,18 +327,17 @@ void safe_delay(millis_t ms) {
       SERIAL_ECHOLNPGM(" Nozzle)");
     #endif
 
-    #if HAS_ABL_OR_UBL
-      SERIAL_ECHOLNPGM("Auto Bed Leveling: "
-        #if ENABLED(AUTO_BED_LEVELING_LINEAR)
-          "LINEAR"
-        #elif ENABLED(AUTO_BED_LEVELING_BILINEAR)
-          "BILINEAR"
-        #elif ENABLED(AUTO_BED_LEVELING_3POINT)
-          "3POINT"
-        #elif ENABLED(AUTO_BED_LEVELING_UBL)
-          "UBL"
-        #endif
-      );
+    #if HAS_ABL
+      SERIAL_ECHOPGM("Auto Bed Leveling: ");
+      #if ENABLED(AUTO_BED_LEVELING_LINEAR)
+        SERIAL_ECHOPGM("LINEAR");
+      #elif ENABLED(AUTO_BED_LEVELING_BILINEAR)
+        SERIAL_ECHOPGM("BILINEAR");
+      #elif ENABLED(AUTO_BED_LEVELING_3POINT)
+        SERIAL_ECHOPGM("3POINT");
+      #elif ENABLED(AUTO_BED_LEVELING_UBL)
+        SERIAL_ECHOPGM("UBL");
+      #endif
       if (planner.leveling_active) {
         SERIAL_ECHOLNPGM(" (enabled)");
         #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)

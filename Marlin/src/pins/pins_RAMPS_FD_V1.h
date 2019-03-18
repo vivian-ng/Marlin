@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -28,11 +28,11 @@
  */
 
 #ifndef __SAM3X8E__
-  #error "Oops! Select 'Arduino Due' in 'Tools > Board.'"
+  #error "Oops!  Make sure you have 'Arduino Due' selected from the 'Tools -> Boards' menu."
 #endif
 
 #ifndef BOARD_NAME
-  #define BOARD_NAME "RAMPS-FD v1"
+  #define BOARD_NAME       "RAMPS-FD"
 #endif
 
 #define INVERTED_HEATER_PINS
@@ -108,13 +108,15 @@
 #define TEMP_0_PIN          1   // Analog Input
 #define TEMP_1_PIN          2   // Analog Input
 #define TEMP_2_PIN          3   // Analog Input
+#define TEMP_3_PIN         -1   // fewer compiler warnings
+#define TEMP_4_PIN         -1   // fewer compiler warnings
 #define TEMP_BED_PIN        0   // Analog Input
 
 // SPI for Max6675 or Max31855 Thermocouple
 #if DISABLED(SDSUPPORT)
-  #define MAX6675_SS_PIN   53
+  #define MAX6675_SS       53
 #else
-  #define MAX6675_SS_PIN   49
+  #define MAX6675_SS       49
 #endif
 
 //
@@ -128,6 +130,7 @@
 #ifndef FAN_PIN
   #define FAN_PIN          12
 #endif
+#define CONTROLLER_FAN_PIN -1
 
 //
 // Misc. Functions
@@ -161,21 +164,21 @@
     #define DOGLCD_A0      27
   #endif
 
-  #if ANY(VIKI2, miniVIKI)
+  #if ENABLED(VIKI2) || ENABLED(miniVIKI)
     #define DOGLCD_A0           16
     #define KILL_PIN            51
     #define STAT_LED_BLUE_PIN   29
     #define STAT_LED_RED_PIN    23
     #define DOGLCD_CS           17
-    #define DOGLCD_SCK          76   // SCK_PIN   - These are required for DUE Hardware SPI
-    #define DOGLCD_MOSI         75   // MOSI_PIN
-    #define DOGLCD_MISO         74   // MISO_PIN
+    #define DOGLCD_SCK          76 //SCK_PIN   - required so that the DUE hardware SPI will be used
+    #define DOGLCD_MOSI         75 //MOSI_PIN  - required so that the DUE hardware SPI will be used
+    #define DOGLCD_MISO         74 //MISO_PIN
   #endif
 
 
 #endif // ULTRA_LCD
 
-#if HAS_DRIVER(TMC2208)
+#if ENABLED(HAVE_TMC2208)
   /**
    * TMC2208 stepper drivers
    *

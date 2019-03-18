@@ -1,7 +1,7 @@
 /**
  * Marlin 3D Printer Firmware
  *
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,13 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
 /**
  * HAL for Arduino Due and compatible (SAM3X8E)
  *
  * For ARDUINO_ARCH_SAM
  */
+
+#ifndef _HAL_TIMERS_DUE_H
+#define _HAL_TIMERS_DUE_H
 
 // --------------------------------------------------------------------------
 // Includes
@@ -65,9 +67,9 @@ typedef uint32_t hal_timer_t;
 #define ENABLE_TEMPERATURE_INTERRUPT()  HAL_timer_enable_interrupt(TEMP_TIMER_NUM)
 #define DISABLE_TEMPERATURE_INTERRUPT() HAL_timer_disable_interrupt(TEMP_TIMER_NUM)
 
-#define HAL_STEP_TIMER_ISR()  void TC3_Handler()
-#define HAL_TEMP_TIMER_ISR()  void TC4_Handler()
-#define HAL_TONE_TIMER_ISR()  void TC6_Handler()
+#define HAL_STEP_TIMER_ISR  void TC3_Handler()
+#define HAL_TEMP_TIMER_ISR  void TC4_Handler()
+#define HAL_TONE_TIMER_ISR  void TC6_Handler()
 
 // --------------------------------------------------------------------------
 // Types
@@ -107,6 +109,12 @@ FORCE_INLINE static hal_timer_t HAL_timer_get_count(const uint8_t timer_num) {
   return pConfig->pTimerRegs->TC_CHANNEL[pConfig->channel].TC_CV;
 }
 
+// if counter too high then bump up compare
+FORCE_INLINE static void HAL_timer_restrain(const uint8_t timer_num, const uint16_t interval_ticks) {
+  const hal_timer_t mincmp = HAL_timer_get_count(timer_num) + interval_ticks;
+  if (HAL_timer_get_compare(timer_num) < mincmp) HAL_timer_set_compare(timer_num, mincmp);
+}
+
 void HAL_timer_enable_interrupt(const uint8_t timer_num);
 void HAL_timer_disable_interrupt(const uint8_t timer_num);
 bool HAL_timer_interrupt_enabled(const uint8_t timer_num);
@@ -118,3 +126,5 @@ FORCE_INLINE static void HAL_timer_isr_prologue(const uint8_t timer_num) {
 }
 
 #define HAL_timer_isr_epilogue(TIMER_NUM)
+
+#endif // _HAL_TIMERS_DUE_H

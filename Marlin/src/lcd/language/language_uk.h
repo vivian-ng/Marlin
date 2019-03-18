@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,7 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
 /**
  * Ukrainian
@@ -28,6 +27,8 @@
  * See also http://marlinfw.org/docs/development/lcd_language.html
  *
  */
+#ifndef LANGUAGE_UK_H
+#define LANGUAGE_UK_H
 
 #define DISPLAY_CHARSET_ISO10646_5
 #define CHARSIZE 2
@@ -50,12 +51,12 @@
 #define MSG_SET_HOME_OFFSETS                _UxGT("Зберегти паркув.")
 #define MSG_HOME_OFFSETS_APPLIED            _UxGT("Зміщення застос.")
 #define MSG_SET_ORIGIN                      _UxGT("Встанов. початок")
-#define MSG_PREHEAT_1                       _UxGT("Нагрів " PREHEAT_1_LABEL)
+#define MSG_PREHEAT_1                       _UxGT("Нагрів PLA")
 #define MSG_PREHEAT_1_N                     MSG_PREHEAT_1 _UxGT(" ")
 #define MSG_PREHEAT_1_ALL                   MSG_PREHEAT_1 _UxGT(" Все")
 #define MSG_PREHEAT_1_BEDONLY               MSG_PREHEAT_1 _UxGT(" Стіл")
 #define MSG_PREHEAT_1_SETTINGS              MSG_PREHEAT_1 _UxGT(" нал.")
-#define MSG_PREHEAT_2                       _UxGT("Нагрів " PREHEAT_2_LABEL)
+#define MSG_PREHEAT_2                       _UxGT("Нагрів ABS")
 #define MSG_PREHEAT_2_N                     MSG_PREHEAT_2 _UxGT(" ")
 #define MSG_PREHEAT_2_ALL                   MSG_PREHEAT_2 _UxGT(" Все")
 #define MSG_PREHEAT_2_BEDONLY               MSG_PREHEAT_2 _UxGT(" Стіл")
@@ -86,8 +87,8 @@
 #define MSG_MAX                             _UxGT(" ") LCD_STR_THERMOMETER _UxGT(" Макс")
 #define MSG_FACTOR                          _UxGT(" ") LCD_STR_THERMOMETER _UxGT(" Факт")
 #define MSG_AUTOTEMP                        _UxGT("Автотемпер.")
-#define MSG_LCD_ON                          _UxGT("Увімк.")
-#define MSG_LCD_OFF                         _UxGT("Вимк.")
+#define MSG_ON                              _UxGT("Увімк.")
+#define MSG_OFF                             _UxGT("Вимк. ")
 #define MSG_PID_P                           _UxGT("PID-P")
 #define MSG_PID_I                           _UxGT("PID-I")
 #define MSG_PID_D                           _UxGT("PID-D")
@@ -127,7 +128,6 @@
 #define MSG_E3STEPS                         _UxGT("E3кроків/мм")
 #define MSG_E4STEPS                         _UxGT("E4кроків/мм")
 #define MSG_E5STEPS                         _UxGT("E5кроків/мм")
-#define MSG_E6STEPS                         _UxGT("E6кроків/мм")
 #define MSG_TEMPERATURE                     _UxGT("Температура")
 #define MSG_MOTION                          _UxGT("Рух")
 #define MSG_FILAMENT                        _UxGT("Волокно")
@@ -154,7 +154,7 @@
 #define MSG_STOPPED                         _UxGT("ЗУПИНЕНО. ")
 #define MSG_FILAMENTCHANGE                  _UxGT("Зміна волокна")
 #define MSG_INIT_SDCARD                     _UxGT("Старт SD картки")
-#define MSG_CHANGE_SDCARD                   _UxGT("Заміна SD карти")
+#define MSG_CNG_SDCARD                      _UxGT("Заміна SD карти")
 #define MSG_ZPROBE_OUT                      _UxGT("Z дет. не в межах")
 #define MSG_BLTOUCH_SELFTEST                _UxGT("BLTouch Само-Тест")
 #define MSG_BLTOUCH_RESET                   _UxGT("Скинути BLTouch")
@@ -238,3 +238,5 @@
   #define MSG_FILAMENT_CHANGE_LOAD_1          _UxGT("Ввід...")
   #define MSG_FILAMENT_CHANGE_RESUME_1        _UxGT("Відновлення...")
 #endif // LCD_HEIGHT < 4
+
+#endif // LANGUAGE_UK_H

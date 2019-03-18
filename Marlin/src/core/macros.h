@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,9 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
-#include "minmax.h"
+#ifndef MACROS_H
+#define MACROS_H
 
 #define NUM_AXIS 4
 #define ABCE 4
@@ -49,14 +49,14 @@
 
 // Clock speed factors
 #if !defined(CYCLES_PER_MICROSECOND) && !defined(__STM32F1__)
-  #define CYCLES_PER_MICROSECOND (F_CPU / 1000000UL) // 16 or 20 on AVR
+  #define CYCLES_PER_MICROSECOND (F_CPU / 1000000L) // 16 or 20 on AVR
 #endif
 
 // Nanoseconds per cycle
 #define NANOSECONDS_PER_CYCLE (1000000000.0 / F_CPU)
 
 // Remove compiler warning on an unused variable
-#define UNUSED(X) (void)X
+#define UNUSED(x) (void) (x)
 
 // Macros to make a string from a macro
 #define STRINGIFY_(M) #M
@@ -79,20 +79,24 @@
 #define CBI32(n,b) (n &= ~_BV32(b))
 
 // Macros for maths shortcuts
-#undef M_PI
-#define M_PI 3.14159265358979323846f
-
-#define RADIANS(d) ((d)*float(M_PI)/180.0f)
-#define DEGREES(r) ((r)*180.0f/float(M_PI))
+#ifndef M_PI
+  #define M_PI 3.14159265358979323846
+#endif
+#define RADIANS(d) ((d)*M_PI/180.0)
+#define DEGREES(r) ((r)*180.0/M_PI)
 #define HYPOT2(x,y) (sq(x)+sq(y))
 
-#define CIRCLE_AREA(R) (float(M_PI) * sq(float(R)))
-#define CIRCLE_CIRC(R) (2 * float(M_PI) * float(R))
+#define CIRCLE_AREA(R) (M_PI * sq(R))
+#define CIRCLE_CIRC(R) (2.0 * M_PI * (R))
 
 #define SIGN(a) ((a>0)-(a<0))
 #define IS_POWER_OF_2(x) ((x) && !((x) & ((x) - 1)))
 
 // Macros to constrain values
+// Avoid double evaluation of arguments to NOMORE/NOLESS/LIMIT
+#undef NOMORE
+#undef NOLESS
+#undef LIMIT
 #ifdef __cplusplus
 
   // C++11 solution that is standards compliant.
@@ -133,25 +137,8 @@
 
 #endif
 
-// Macros to chain up to 12 conditions
-#define _DO_1(W,C,A)       (_##W##_1(A))
-#define _DO_2(W,C,A,B)     (_##W##_1(A) C _##W##_1(B))
-#define _DO_3(W,C,A,V...)  (_##W##_1(A) C _DO_2(W,C,V))
-#define _DO_4(W,C,A,V...)  (_##W##_1(A) C _DO_3(W,C,V))
-#define _DO_5(W,C,A,V...)  (_##W##_1(A) C _DO_4(W,C,V))
-#define _DO_6(W,C,A,V...)  (_##W##_1(A) C _DO_5(W,C,V))
-#define _DO_7(W,C,A,V...)  (_##W##_1(A) C _DO_6(W,C,V))
-#define _DO_8(W,C,A,V...)  (_##W##_1(A) C _DO_7(W,C,V))
-#define _DO_9(W,C,A,V...)  (_##W##_1(A) C _DO_8(W,C,V))
-#define _DO_10(W,C,A,V...) (_##W##_1(A) C _DO_9(W,C,V))
-#define _DO_11(W,C,A,V...) (_##W##_1(A) C _DO_10(W,C,V))
-#define _DO_12(W,C,A,V...) (_##W##_1(A) C _DO_11(W,C,V))
-#define __DO_N(W,C,N,V...) _DO_##N(W,C,V)
-#define _DO_N(W,C,N,V...)  __DO_N(W,C,N,V)
-#define DO(W,C,V...)       _DO_N(W,C,NUM_ARGS(V),V)
-
 // Macros to support option testing
-#define _CAT(a,V...) a##V
+#define _CAT(a, ...) a ## __VA_ARGS__
 #define SWITCH_ENABLED_false 0
 #define SWITCH_ENABLED_true  1
 #define SWITCH_ENABLED_0     0
@@ -159,37 +146,17 @@
 #define SWITCH_ENABLED_0x0   0
 #define SWITCH_ENABLED_0x1   1
 #define SWITCH_ENABLED_      1
-#define _ENA_1(O)           _CAT(SWITCH_ENABLED_, O)
-#define _DIS_1(O)           !_ENA_1(O)
-#define ENABLED(V...)       DO(ENA,&&,V)
-#define DISABLED(V...)      DO(DIS,&&,V)
+#define ENABLED(b) _CAT(SWITCH_ENABLED_, b)
+#define DISABLED(b) !ENABLED(b)
 
-#define ANY(V...)          !DISABLED(V)
-#define NONE(V...)          DISABLED(V)
-#define ALL(V...)           ENABLED(V)
-#define BOTH(V1,V2)         ALL(V1,V2)
-#define EITHER(V1,V2)       ANY(V1,V2)
-
-// Macros to support pins/buttons exist testing
-#define _PINEX_1(PN)        (defined(PN##_PIN) && PN##_PIN >= 0)
-#define PIN_EXISTS(V...)    DO(PINEX,&&,V)
-#define ANY_PIN(V...)       DO(PINEX,||,V)
-
-#define _BTNEX_1(BN)        (defined(BTN_##BN) && BTN_##BN >= 0)
-#define BUTTON_EXISTS(V...) DO(BTNEX,&&,V)
-#define ANY_BUTTON(V...)    DO(BTNEX,||,V)
-
-#define WITHIN(N,L,H)       ((N) >= (L) && (N) <= (H))
-#define NUMERIC(a)          WITHIN(a, '0', '9')
-#define DECIMAL(a)          (NUMERIC(a) || a == '.')
-#define NUMERIC_SIGNED(a)   (NUMERIC(a) || (a) == '-' || (a) == '+')
-#define DECIMAL_SIGNED(a)   (DECIMAL(a) || (a) == '-' || (a) == '+')
-#define COUNT(a)            (sizeof(a)/sizeof(*a))
-#define ZERO(a)             memset(a,0,sizeof(a))
-#define COPY(a,b) do{ \
-    static_assert(sizeof(a[0]) == sizeof(b[0]), "COPY: '" STRINGIFY(a) "' and '" STRINGIFY(b) "' types (sizes) don't match!"); \
-    memcpy(&a[0],&b[0],MIN(sizeof(a),sizeof(b))); \
-  }while(0)
+#define WITHIN(V,L,H) ((V) >= (L) && (V) <= (H))
+#define NUMERIC(a) WITHIN(a, '0', '9')
+#define DECIMAL(a) (NUMERIC(a) || a == '.')
+#define NUMERIC_SIGNED(a) (NUMERIC(a) || (a) == '-' || (a) == '+')
+#define DECIMAL_SIGNED(a) (DECIMAL(a) || (a) == '-' || (a) == '+')
+#define COUNT(a) (sizeof(a)/sizeof(*a))
+#define ZERO(a) memset(a,0,sizeof(a))
+#define COPY(a,b) memcpy(a,b,MIN(sizeof(a),sizeof(b)))
 
 // Macros for initializing arrays
 #define ARRAY_6(v1, v2, v3, v4, v5, v6, ...) { v1, v2, v3, v4, v5, v6 }
@@ -199,8 +166,8 @@
 #define ARRAY_2(v1, v2, ...)                 { v1, v2 }
 #define ARRAY_1(v1, ...)                     { v1 }
 
-#define _ARRAY_N(N,V...) ARRAY_##N(V)
-#define ARRAY_N(N,V...) _ARRAY_N(N,V)
+#define _ARRAY_N(N, ...) ARRAY_ ##N(__VA_ARGS__)
+#define ARRAY_N(N, ...) _ARRAY_N(N, __VA_ARGS__)
 
 // Macros for adding
 #define INC_0 1
@@ -212,7 +179,7 @@
 #define INC_6 7
 #define INC_7 8
 #define INC_8 9
-#define INCREMENT_(n) INC_##n
+#define INCREMENT_(n) INC_ ##n
 #define INCREMENT(n) INCREMENT_(n)
 
 // Macros for subtracting
@@ -225,45 +192,81 @@
 #define DEC_7 6
 #define DEC_8 7
 #define DEC_9 8
-#define DECREMENT_(n) DEC_##n
+#define DECREMENT_(n) DEC_ ##n
 #define DECREMENT(n) DECREMENT_(n)
 
-#define MMM_TO_MMS(MM_M) ((MM_M)/60.0f)
-#define MMS_TO_MMM(MM_S) ((MM_S)*60.0f)
+#define PIN_EXISTS(PN) (defined(PN ##_PIN) && PN ##_PIN >= 0)
 
-#define NOOP (void(0))
+#define PENDING(NOW,SOON) ((long)(NOW-(SOON))<0)
+#define ELAPSED(NOW,SOON) (!PENDING(NOW,SOON))
+
+#define MMM_TO_MMS(MM_M) ((MM_M)/60.0)
+#define MMS_TO_MMM(MM_S) ((MM_S)*60.0)
+
+#define NOOP do{} while(0)
 
 #define CEILING(x,y) (((x) + (y) - 1) / (y))
 
+// Avoid double evaluation of arguments on MIN/MAX/ABS
+#undef MIN
+#undef MAX
 #undef ABS
 #ifdef __cplusplus
-  template <class T> static inline constexpr const T ABS(const T v) { return v >= 0 ? v : -v; }
+
+  // C++11 solution that is standards compliant. Return type is deduced automatically
+  template <class L, class R> static inline constexpr auto MIN(const L lhs, const R rhs) -> decltype(lhs + rhs) {
+    return lhs < rhs ? lhs : rhs;
+  }
+  template <class L, class R> static inline constexpr auto MAX(const L lhs, const R rhs) -> decltype(lhs + rhs){
+    return lhs > rhs ? lhs : rhs;
+  }
+  template <class T> static inline constexpr const T ABS(const T v) {
+    return v >= 0 ? v : -v;
+  }
 #else
-  #define ABS(a) ({__typeof__(a) _a = (a); _a >= 0 ? _a : -_a;})
+
+  // Using GCC extensions, but Travis GCC version does not like it and gives
+  //  "error: statement-expressions are not allowed outside functions nor in template-argument lists"
+  #define MIN(a, b) \
+    ({__typeof__(a) _a = (a); \
+      __typeof__(b) _b = (b); \
+      _a < _b ? _a : _b;})
+
+  #define MAX(a, b) \
+    ({__typeof__(a) _a = (a); \
+      __typeof__(b) _b = (b); \
+      _a > _b ? _a : _b;})
+
+  #define ABS(a) \
+    ({__typeof__(a) _a = (a); \
+      _a >= 0 ? _a : -_a;})
+
 #endif
 
-#define UNEAR_ZERO(x) ((x) < 0.000001f)
-#define NEAR_ZERO(x) WITHIN(x, -0.000001f, 0.000001f)
+#define MIN3(a, b, c)       MIN(MIN(a, b), c)
+#define MIN4(a, b, c, d)    MIN(MIN3(a, b, c), d)
+#define MIN5(a, b, c, d, e) MIN(MIN4(a, b, c, d), e)
+#define MAX3(a, b, c)       MAX(MAX(a, b), c)
+#define MAX4(a, b, c, d)    MAX(MAX3(a, b, c), d)
+#define MAX5(a, b, c, d, e) MAX(MAX4(a, b, c, d), e)
+
+#define UNEAR_ZERO(x) ((x) < 0.000001)
+#define NEAR_ZERO(x) WITHIN(x, -0.000001, 0.000001)
 #define NEAR(x,y) NEAR_ZERO((x)-(y))
 
-#define RECIPROCAL(x) (NEAR_ZERO(x) ? 0 : (1 / float(x)))
-#define FIXFLOAT(f) (f + (f < 0 ? -0.00005f : 0.00005f))
+#define RECIPROCAL(x) (NEAR_ZERO(x) ? 0.0 : 1.0 / (x))
+#define FIXFLOAT(f) (f + (f < 0.0 ? -0.00005 : 0.00005))
 
 //
 // Maths macros that can be overridden by HAL
 //
-#define ATAN2(y, x) atan2f(y, x)
-#define POW(x, y)   powf(x, y)
-#define SQRT(x)     sqrtf(x)
-#define RSQRT(x)    (1 / sqrtf(x))
-#define CEIL(x)     ceilf(x)
-#define FLOOR(x)    floorf(x)
-#define LROUND(x)   lroundf(x)
-#define FMOD(x, y)  fmodf(x, y)
+#define ATAN2(y, x) atan2(y, x)
+#define POW(x, y)   pow(x, y)
+#define SQRT(x)     sqrt(x)
+#define CEIL(x)     ceil(x)
+#define FLOOR(x)    floor(x)
+#define LROUND(x)   lround(x)
+#define FMOD(x, y)  fmod(x, y)
 #define HYPOT(x,y)  SQRT(HYPOT2(x,y))
 
-#ifdef TARGET_LPC1768
-  #define I2C_ADDRESS(A) ((A) << 1)
-#else
-  #define I2C_ADDRESS(A) A
-#endif
+#endif //__MACROS_H

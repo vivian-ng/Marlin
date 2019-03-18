@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016, 2017 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,7 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
+
+#ifndef _SANITYCHECK_AVR_8_BIT_H_
+#define _SANITYCHECK_AVR_8_BIT_H_
 
 /**
  * Test AVR specific configuration values for errors at compile-time.
@@ -33,13 +35,6 @@
     || !defined(DIGIPOTS_I2C_SDA_E0) || !defined(DIGIPOTS_I2C_SDA_E1)
       #error "DIGIPOT_MCP4018 requires DIGIPOTS_I2C_SDA_* pins to be defined."
   #endif
-#endif
-
-/**
- * Checks for FAST PWM
- */
-#if ENABLED(FAST_PWM_FAN) && (ENABLED(USE_OCR2A_AS_TOP) && defined(TCCR2))
-    #error "USE_OCR2A_AS_TOP does not apply to devices with a single output TIMER2"
 #endif
 
 /**
@@ -83,14 +78,12 @@
       #error "SPINDLE_LASER_PWM_PIN is used by E3_AUTO_FAN_PIN."
     #elif PIN_EXISTS(E4_AUTO_FAN) && SPINDLE_LASER_PWM_PIN == E4_AUTO_FAN_PIN
       #error "SPINDLE_LASER_PWM_PIN is used by E4_AUTO_FAN_PIN."
-    #elif PIN_EXISTS(E5_AUTO_FAN) && SPINDLE_LASER_PWM_PIN == E5_AUTO_FAN_PIN
-      #error "SPINDLE_LASER_PWM_PIN is used by E5_AUTO_FAN_PIN."
     #elif PIN_EXISTS(FAN) && SPINDLE_LASER_PWM_PIN == FAN_PIN
-      #error "SPINDLE_LASER_PWM_PIN is used by FAN_PIN."
+      #error "SPINDLE_LASER_PWM_PIN is used FAN_PIN."
     #elif PIN_EXISTS(FAN1) && SPINDLE_LASER_PWM_PIN == FAN1_PIN
-      #error "SPINDLE_LASER_PWM_PIN is used by FAN1_PIN."
+      #error "SPINDLE_LASER_PWM_PIN is used FAN1_PIN."
     #elif PIN_EXISTS(FAN2) && SPINDLE_LASER_PWM_PIN == FAN2_PIN
-      #error "SPINDLE_LASER_PWM_PIN is used by FAN2_PIN."
+      #error "SPINDLE_LASER_PWM_PIN is used FAN2_PIN."
     #elif PIN_EXISTS(CONTROLLERFAN) && SPINDLE_LASER_PWM_PIN == CONTROLLERFAN_PIN
       #error "SPINDLE_LASER_PWM_PIN is used by CONTROLLERFAN_PIN."
     #elif PIN_EXISTS(MOTOR_CURRENT_PWM_XY) && SPINDLE_LASER_PWM_PIN == MOTOR_CURRENT_PWM_XY_PIN
@@ -104,8 +97,21 @@
 #endif // SPINDLE_LASER_ENABLE
 
 /**
- * The Trinamic library includes SoftwareSerial.h, leading to a compile error.
+ * TMC2208 software UART and ENDSTOP_INTERRUPTS both use pin change interrupts (PCI)
  */
-#if HAS_TRINAMIC && ENABLED(ENDSTOP_INTERRUPTS_FEATURE)
-  #error "TMCStepper includes SoftwareSerial.h which is incompatible with ENDSTOP_INTERRUPTS_FEATURE. Disable ENDSTOP_INTERRUPTS_FEATURE to continue."
+#if ENABLED(HAVE_TMC2208) && ENABLED(ENDSTOP_INTERRUPTS_FEATURE) && !( \
+       defined(X_HARDWARE_SERIAL ) \
+    || defined(X2_HARDWARE_SERIAL) \
+    || defined(Y_HARDWARE_SERIAL ) \
+    || defined(Y2_HARDWARE_SERIAL) \
+    || defined(Z_HARDWARE_SERIAL ) \
+    || defined(Z2_HARDWARE_SERIAL) \
+    || defined(E0_HARDWARE_SERIAL) \
+    || defined(E1_HARDWARE_SERIAL) \
+    || defined(E2_HARDWARE_SERIAL) \
+    || defined(E3_HARDWARE_SERIAL) \
+    || defined(E4_HARDWARE_SERIAL) )
+  #error "Select hardware UART for TMC2208 to use both TMC2208 and ENDSTOP_INTERRUPTS_FEATURE."
 #endif
+
+#endif // _SANITYCHECK_AVR_8_BIT_H_

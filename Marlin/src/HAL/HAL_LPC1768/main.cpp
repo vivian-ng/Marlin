@@ -1,5 +1,15 @@
 #ifdef TARGET_LPC1768
 
+// ---------------------
+// Userspace entry point
+// ---------------------
+extern void setup();
+extern void loop();
+
+extern "C" {
+#include <lpc17xx_gpio.h>
+}
+
 #include <usb/usb.h>
 #include <usb/usbcfg.h>
 #include <usb/usbhw.h>
@@ -7,80 +17,88 @@
 #include <usb/cdc.h>
 #include <usb/cdcuser.h>
 #include <usb/mscuser.h>
-#include <CDCSerial.h>
-#include <usb/mscuser.h>
 
 extern "C" {
-  #include <debug_frmwrk.h>
+#include <debug_frmwrk.h>
+#include <chanfs/diskio.h>
+#include <chanfs/ff.h>
 }
 
-#include "../../sd/cardreader.h"
 #include "../../inc/MarlinConfig.h"
 #include "HAL.h"
+#include "fastio.h"
 #include "HAL_timers.h"
+#include <stdio.h>
+#include <stdarg.h>
+#include <Arduino.h>
+#include "serial.h"
+#include "LPC1768_PWM.h"
 
-extern uint32_t MSC_SD_Init(uint8_t pdrv);
-extern "C" int isLPC1769();
-extern "C" void disk_timerproc(void);
+static __INLINE uint32_t SysTick_Config(uint32_t ticks) {
+  if (ticks > SysTick_LOAD_RELOAD_Msk)
+    return (1); /* Reload value impossible */
 
-void SysTick_Callback() {
-  disk_timerproc();
+  SysTick->LOAD = (ticks & SysTick_LOAD_RELOAD_Msk) - 1; /* set reload register */
+  NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(0, 0, 0)); /* set Priority for Cortex-M3 System Interrupts */
+  SysTick->VAL = 0; /* Load the SysTick Counter Value */
+  SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk |
+  SysTick_CTRL_TICKINT_Msk |
+  SysTick_CTRL_ENABLE_Msk; /* Enable SysTick IRQ and SysTick Timer */
+  return (0); /* Function successful */
 }
 
-void HAL_init() {
+extern "C" {
+extern void disk_timerproc(void);
+volatile uint32_t _millis;
+void SysTick_Handler(void) {
+  ++_millis;
+  disk_timerproc(); /* Disk timer process */
+}
+}
 
-  // Support the 4 LEDs some LPC176x boards have
-  #if PIN_EXISTS(LED)
-    SET_DIR_OUTPUT(LED_PIN);
-    WRITE_PIN_CLR(LED_PIN);
-    #if PIN_EXISTS(LED2)
-      SET_DIR_OUTPUT(LED2_PIN);
-      WRITE_PIN_CLR(LED2_PIN);
-      #if PIN_EXISTS(LED3)
-        SET_DIR_OUTPUT(LED3_PIN);
-        WRITE_PIN_CLR(LED3_PIN);
-        #if PIN_EXISTS(LED4)
-          SET_DIR_OUTPUT(LED4_PIN);
-          WRITE_PIN_CLR(LED4_PIN);
-        #endif
-      #endif
-    #endif
+// runs after clock init and before global static constructors
+extern "C" void SystemPostInit() {
+  _millis = 0;     // initialise the millisecond counter value;
+  SysTick_Config(SystemCoreClock / 1000);     // start millisecond global counter
+  GPIO_SetDir(4, 1UL << 28, 1);
 
-    // Flash status LED 3 times to indicate Marlin has started booting
-    for (uint8_t i = 0; i < 6; ++i) {
-      TOGGLE(LED_PIN);
-      delay(100);
-    }
-  #endif
+  for (int i = 0; i < 4; ++i) {
+    GPIO_SetValue(4, 1UL << 28);
+    delay(100);
+    GPIO_ClearValue(4, 1UL << 28);
+    delay(100);
+  }
+}
 
-  //debug_frmwrk_init();
-  //_DBG("\n\nDebug running\n");
-  // Initialise the SD card chip select pins as soon as possible
-  #if PIN_EXISTS(SS)
-    WRITE(SS_PIN, HIGH);
-    SET_OUTPUT(SS_PIN);
-  #endif
+// detect 17x[4-8] (100MHz) or 17x9 (120MHz)
+static bool isLPC1769() {
+    #define IAP_LOCATION 0x1FFF1FF1
+    uint32_t command[1];
+    uint32_t result[5];
+    typedef void (*IAP)(uint32_t*, uint32_t*);
+    IAP iap = (IAP) IAP_LOCATION;
 
-  #if defined(ONBOARD_SD_CS) && ONBOARD_SD_CS > -1
-    WRITE(ONBOARD_SD_CS, HIGH);
-    SET_OUTPUT(ONBOARD_SD_CS);
-  #endif
+    command[0] = 54;
+    iap(command, result);
+
+    return ((result[1] & 0x00100000) != 0);
+}
+
+extern uint32_t MSC_SD_Init(uint8_t pdrv);
+
+int main(void) {
+
+  (void)MSC_SD_Init(0);
 
   USB_Init();                               // USB Initialization
-  USB_Connect(FALSE);                       // USB clear connection
-  delay(1000);                              // Give OS time to notice
-  USB_Connect(TRUE);
+  USB_Connect(TRUE);                        // USB Connect
 
-  #if DISABLED(USB_SD_DISABLED)
-    MSC_SD_Init(0);                         // Enable USB SD card access
-  #endif
-
-  const millis_t usb_timeout = millis() + 2000;
+  const uint32_t usb_timeout = millis() + 2000;
   while (!USB_Configuration && PENDING(millis(), usb_timeout)) {
     delay(50);
-    HAL_idletask();
+
     #if PIN_EXISTS(LED)
-      TOGGLE(LED_PIN);     // Flash quickly during USB initialization
+      TOGGLE(LED_PIN);     // Flash fast while USB initialisation completes
     #endif
   }
 
@@ -89,30 +107,16 @@ void HAL_init() {
     #if NUM_SERIAL > 1
       MYSERIAL1.begin(BAUDRATE);
     #endif
-    SERIAL_PRINTF("\n\necho:%s (%dMhz) Initialized\n", isLPC1769() ? "LPC1769" : "LPC1768", SystemCoreClock / 1000000);
+    SERIAL_PRINTF("\n\n%s (%dMhz) UART0 Initialised\n", isLPC1769() ? "LPC1769" : "LPC1768", SystemCoreClock / 1000000);
     SERIAL_FLUSHTX();
   #endif
 
   HAL_timer_init();
-}
 
-// HAL idle task
-void HAL_idletask(void) {
-  #if BOTH(SDSUPPORT, SHARED_SD_CARD)
-    // If Marlin is using the SD card we need to lock it to prevent access from
-    // a PC via USB.
-    // Other HALs use IS_SD_PRINTING() and IS_SD_FILE_OPEN() to check for access but
-    // this will not reliably detect delete operations. To be safe we will lock
-    // the disk if Marlin has it mounted. Unfortuately there is currently no way
-    // to unmount the disk from the LCD menu.
-    // if (IS_SD_PRINTING() || IS_SD_FILE_OPEN())
-    if (card.isDetected())
-      MSC_Aquire_Lock();
-    else
-      MSC_Release_Lock();
-  #endif
-  // Perform USB stack housekeeping
-  MSC_RunDeferredCommands();
+  LPC1768_PWM_init();
+
+  setup();
+  for (;;) loop();
 }
 
 #endif // TARGET_LPC1768

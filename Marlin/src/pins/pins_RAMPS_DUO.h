@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -43,10 +43,12 @@
  */
 
 #if !defined(__SAM3X8E__) && !defined(__AVR_ATmega2560__)
-  #error "Oops! Select 'Arduino Due' or 'Arduino/Genuino Mega or Mega 2560' in 'Tools > Board.'"
+  #error "Oops!  Make sure you have 'Arduino Due' or 'Arduino Mega' selected from the 'Tools -> Boards' menu."
 #endif
 
-#define BOARD_NAME "RAMPS Duo"
+#ifndef BOARD_NAME
+  #define BOARD_NAME       "RAMPS Duo"
+#endif
 
 #define IS_RAMPS_DUO
 #include "pins_RAMPS.h"
@@ -64,11 +66,11 @@
 #define TEMP_BED_PIN       10   // Analog Input
 
 // SPI for Max6675 or Max31855 Thermocouple
-#undef MAX6675_SS_PIN
+#undef MAX6675_SS
 #if DISABLED(SDSUPPORT)
-  #define MAX6675_SS_PIN   69   // Do not use pin 53 if there is even the remote possibility of using Display/SD card
+  #define MAX6675_SS       69   // Do not use pin 53 if there is even the remote possibility of using Display/SD card
 #else
-  #define MAX6675_SS_PIN   69   // Do not use pin 49 as this is tied to the switch inside the SD card socket to detect if there is an SD card present
+  #define MAX6675_SS       69   // Do not use pin 49 as this is tied to the switch inside the SD card socket to detect if there is an SD card present
 #endif
 
 //
@@ -76,7 +78,7 @@
 //
 #if ENABLED(ULTRA_LCD)
 
-  #if BOTH(NEWPANEL, PANEL_ONE)
+  #if ENABLED(NEWPANEL) && ENABLED(PANEL_ONE)
     #undef LCD_PINS_D4
     #define LCD_PINS_D4  68
 

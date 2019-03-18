@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016, 2017 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,18 +19,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
+
+#ifndef UNIFIED_BED_LEVELING_H
+#define UNIFIED_BED_LEVELING_H
 
 //#define UBL_DEVEL_DEBUGGING
 
 #include "../bedlevel.h"
 #include "../../../module/planner.h"
 #include "../../../module/motion.h"
-#include "../../../lcd/ultralcd.h"
 #include "../../../Marlin.h"
-
-#define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
-#include "../../../core/debug_out.h"
 
 #define UBL_VERSION "1.01"
 #define UBL_OK false
@@ -42,9 +40,9 @@
 // ubl_motion.cpp
 
 #if ENABLED(UBL_DEVEL_DEBUGGING)
-  void debug_current_and_destination(PGM_P const title);
+  void debug_current_and_destination(const char * const title);
 #else
-  FORCE_INLINE void debug_current_and_destination(PGM_P const title) { UNUSED(title); }
+  FORCE_INLINE void debug_current_and_destination(const char * const title) { UNUSED(title); }
 #endif
 
 // ubl_G29.cpp
@@ -52,6 +50,14 @@
 enum MeshPointType : char { INVALID, REAL, SET_IN_BITMAP };
 
 // External references
+
+extern uint8_t ubl_cnt;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if ENABLED(ULTRA_LCD)
+  void lcd_quick_feedback(const bool clear_buttons);
+#endif
 
 #define MESH_X_DIST (float(MESH_MAX_X - (MESH_MIN_X)) / float(GRID_MAX_POINTS_X - 1))
 #define MESH_Y_DIST (float(MESH_MAX_Y - (MESH_MIN_Y)) / float(GRID_MAX_POINTS_Y - 1))
@@ -86,20 +92,29 @@ class unified_bed_leveling {
     static void probe_entire_mesh(const float &rx, const float &ry, const bool do_ubl_mesh_map, const bool stow_probe, const bool do_furthest) _O0;
     static void tilt_mesh_based_on_3pts(const float &z1, const float &z2, const float &z3);
     static void tilt_mesh_based_on_probed_grid(const bool do_ubl_mesh_map);
+    static void g29_what_command();
+    static void g29_eeprom_dump();
+    static void g29_compare_current_mesh_to_stored_mesh();
     static bool smart_fill_one(const uint8_t x, const uint8_t y, const int8_t xdir, const int8_t ydir);
     static void smart_fill_mesh();
 
-    #if ENABLED(UBL_DEVEL_DEBUGGING)
-      static void g29_what_command();
-      static void g29_eeprom_dump();
-      static void g29_compare_current_mesh_to_stored_mesh();
-    #endif
-
   public:
 
-    static void echo_name();
-    static void report_current_mesh();
-    static void report_state();
+    static void echo_name(
+      #if NUM_SERIAL > 1
+        const int8_t port = -1
+      #endif
+    );
+    static void report_current_mesh(
+      #if NUM_SERIAL > 1
+        const int8_t port = -1
+      #endif
+    );
+    static void report_state(
+      #if NUM_SERIAL > 1
+        const int8_t port = -1
+      #endif
+    );
     static void save_ubl_active_state_and_disable();
     static void restore_ubl_active_state_and_leave();
     static void display_map(const int) _O0;
@@ -142,7 +157,7 @@ class unified_bed_leveling {
                               MESH_MIN_Y + 14 * (MESH_Y_DIST), MESH_MIN_Y + 15 * (MESH_Y_DIST)
                             };
 
-    #if HAS_LCD_MENU
+    #if ENABLED(ULTIPANEL)
       static bool lcd_map_control;
     #endif
 
@@ -153,14 +168,14 @@ class unified_bed_leveling {
     FORCE_INLINE static void set_z(const int8_t px, const int8_t py, const float &z) { z_values[px][py] = z; }
 
     static int8_t get_cell_index_x(const float &x) {
-      const int8_t cx = (x - (MESH_MIN_X)) * (1.0f / (MESH_X_DIST));
+      const int8_t cx = (x - (MESH_MIN_X)) * (1.0 / (MESH_X_DIST));
       return constrain(cx, 0, (GRID_MAX_POINTS_X) - 1);   // -1 is appropriate if we want all movement to the X_MAX
     }                                                     // position. But with this defined this way, it is possible
                                                           // to extrapolate off of this point even further out. Probably
                                                           // that is OK because something else should be keeping that from
                                                           // happening and should not be worried about at this level.
     static int8_t get_cell_index_y(const float &y) {
-      const int8_t cy = (y - (MESH_MIN_Y)) * (1.0f / (MESH_Y_DIST));
+      const int8_t cy = (y - (MESH_MIN_Y)) * (1.0 / (MESH_Y_DIST));
       return constrain(cy, 0, (GRID_MAX_POINTS_Y) - 1);   // -1 is appropriate if we want all movement to the Y_MAX
     }                                                     // position. But with this defined this way, it is possible
                                                           // to extrapolate off of this point even further out. Probably
@@ -168,12 +183,12 @@ class unified_bed_leveling {
                                                           // happening and should not be worried about at this level.
 
     static int8_t find_closest_x_index(const float &x) {
-      const int8_t px = (x - (MESH_MIN_X) + (MESH_X_DIST) * 0.5) * (1.0f / (MESH_X_DIST));
+      const int8_t px = (x - (MESH_MIN_X) + (MESH_X_DIST) * 0.5) * (1.0 / (MESH_X_DIST));
       return WITHIN(px, 0, GRID_MAX_POINTS_X - 1) ? px : -1;
     }
 
     static int8_t find_closest_y_index(const float &y) {
-      const int8_t py = (y - (MESH_MIN_Y) + (MESH_Y_DIST) * 0.5) * (1.0f / (MESH_Y_DIST));
+      const int8_t py = (y - (MESH_MIN_Y) + (MESH_Y_DIST) * 0.5) * (1.0 / (MESH_Y_DIST));
       return WITHIN(py, 0, GRID_MAX_POINTS_Y - 1) ? py : -1;
     }
 
@@ -200,13 +215,18 @@ class unified_bed_leveling {
      * z_correction_for_x_on_horizontal_mesh_line is an optimization for
      * the case where the printer is making a vertical line that only crosses horizontal mesh lines.
      */
-    static inline float z_correction_for_x_on_horizontal_mesh_line(const float &rx0, const int x1_i, const int yi) {
+    inline static float z_correction_for_x_on_horizontal_mesh_line(const float &rx0, const int x1_i, const int yi) {
       if (!WITHIN(x1_i, 0, GRID_MAX_POINTS_X - 1) || !WITHIN(yi, 0, GRID_MAX_POINTS_Y - 1)) {
-
-        if (DEBUGGING(LEVELING)) {
-          if (WITHIN(x1_i, 0, GRID_MAX_POINTS_X - 1)) DEBUG_ECHOPGM("yi"); else DEBUG_ECHOPGM("x1_i");
-          DEBUG_ECHOLNPAIR(" out of bounds in z_correction_for_x_on_horizontal_mesh_line(rx0=", rx0, ",x1_i=", x1_i, ",yi=", yi, ")");
-        }
+        #if ENABLED(DEBUG_LEVELING_FEATURE)
+          if (DEBUGGING(LEVELING)) {
+            serialprintPGM( !WITHIN(x1_i, 0, GRID_MAX_POINTS_X - 1) ? PSTR("x1_i") : PSTR("yi") );
+            SERIAL_ECHOPAIR(" out of bounds in z_correction_for_x_on_horizontal_mesh_line(rx0=", rx0);
+            SERIAL_ECHOPAIR(",x1_i=", x1_i);
+            SERIAL_ECHOPAIR(",yi=", yi);
+            SERIAL_CHAR(')');
+            SERIAL_EOL();
+          }
+        #endif
 
         // The requested location is off the mesh. Return UBL_Z_RAISE_WHEN_OFF_MESH or NAN.
         return (
@@ -218,7 +238,7 @@ class unified_bed_leveling {
         );
       }
 
-      const float xratio = (rx0 - mesh_index_to_xpos(x1_i)) * (1.0f / (MESH_X_DIST)),
+      const float xratio = (rx0 - mesh_index_to_xpos(x1_i)) * (1.0 / (MESH_X_DIST)),
                   z1 = z_values[x1_i][yi];
 
       return z1 + xratio * (z_values[MIN(x1_i, GRID_MAX_POINTS_X - 2) + 1][yi] - z1); // Don't allow x1_i+1 to be past the end of the array
@@ -229,13 +249,18 @@ class unified_bed_leveling {
     //
     // See comments above for z_correction_for_x_on_horizontal_mesh_line
     //
-    static inline float z_correction_for_y_on_vertical_mesh_line(const float &ry0, const int xi, const int y1_i) {
+    inline static float z_correction_for_y_on_vertical_mesh_line(const float &ry0, const int xi, const int y1_i) {
       if (!WITHIN(xi, 0, GRID_MAX_POINTS_X - 1) || !WITHIN(y1_i, 0, GRID_MAX_POINTS_Y - 1)) {
-
-        if (DEBUGGING(LEVELING)) {
-          if (WITHIN(xi, 0, GRID_MAX_POINTS_X - 1)) DEBUG_ECHOPGM("y1_i"); else DEBUG_ECHOPGM("xi");
-          DEBUG_ECHOLNPAIR(" out of bounds in z_correction_for_y_on_vertical_mesh_line(ry0=", ry0, ", xi=", xi, ", y1_i=", y1_i, ")");
-        }
+        #if ENABLED(DEBUG_LEVELING_FEATURE)
+          if (DEBUGGING(LEVELING)) {
+            serialprintPGM( !WITHIN(xi, 0, GRID_MAX_POINTS_X - 1) ? PSTR("xi") : PSTR("y1_i") );
+            SERIAL_ECHOPAIR(" out of bounds in z_correction_for_y_on_vertical_mesh_line(ry0=", ry0);
+            SERIAL_ECHOPAIR(", xi=", xi);
+            SERIAL_ECHOPAIR(", y1_i=", y1_i);
+            SERIAL_CHAR(')');
+            SERIAL_EOL();
+          }
+        #endif
 
         // The requested location is off the mesh. Return UBL_Z_RAISE_WHEN_OFF_MESH or NAN.
         return (
@@ -247,7 +272,7 @@ class unified_bed_leveling {
         );
       }
 
-      const float yratio = (ry0 - mesh_index_to_ypos(y1_i)) * (1.0f / (MESH_Y_DIST)),
+      const float yratio = (ry0 - mesh_index_to_ypos(y1_i)) * (1.0 / (MESH_Y_DIST)),
                   z1 = z_values[xi][y1_i];
 
       return z1 + yratio * (z_values[xi][MIN(y1_i, GRID_MAX_POINTS_Y - 2) + 1] - z1); // Don't allow y1_i+1 to be past the end of the array
@@ -286,12 +311,23 @@ class unified_bed_leveling {
                          mesh_index_to_ypos(cy), z1,
                          mesh_index_to_ypos(cy + 1), z2);
 
-      if (DEBUGGING(MESH_ADJUST)) {
-        DEBUG_ECHOPAIR(" raw get_z_correction(", rx0);
-        DEBUG_CHAR(','); DEBUG_ECHO(ry0);
-        DEBUG_ECHOPAIR_F(") = ", z0, 6);
-        DEBUG_ECHOLNPAIR_F(" >>>---> ", z0, 6);
-      }
+      #if ENABLED(DEBUG_LEVELING_FEATURE)
+        if (DEBUGGING(MESH_ADJUST)) {
+          SERIAL_ECHOPAIR(" raw get_z_correction(", rx0);
+          SERIAL_CHAR(',');
+          SERIAL_ECHO(ry0);
+          SERIAL_ECHOPGM(") = ");
+          SERIAL_ECHO_F(z0, 6);
+        }
+      #endif
+
+      #if ENABLED(DEBUG_LEVELING_FEATURE)
+        if (DEBUGGING(MESH_ADJUST)) {
+          SERIAL_ECHOPGM(" >>>---> ");
+          SERIAL_ECHO_F(z0, 6);
+          SERIAL_EOL();
+        }
+      #endif
 
       if (isnan(z0)) { // if part of the Mesh is undefined, it will show up as NAN
         z0 = 0.0;      // in ubl.z_values[][] and propagate through the
@@ -299,22 +335,24 @@ class unified_bed_leveling {
                        // because part of the Mesh is undefined and we don't have the
                        // information we need to complete the height correction.
 
-        if (DEBUGGING(MESH_ADJUST)) {
-          DEBUG_ECHOPAIR("??? Yikes!  NAN in get_z_correction(", rx0);
-          DEBUG_CHAR(',');
-          DEBUG_ECHO(ry0);
-          DEBUG_CHAR(')');
-          DEBUG_EOL();
-        }
+        #if ENABLED(DEBUG_LEVELING_FEATURE)
+          if (DEBUGGING(MESH_ADJUST)) {
+            SERIAL_ECHOPAIR("??? Yikes!  NAN in get_z_correction(", rx0);
+            SERIAL_CHAR(',');
+            SERIAL_ECHO(ry0);
+            SERIAL_CHAR(')');
+            SERIAL_EOL();
+          }
+        #endif
       }
       return z0;
     }
 
-    static inline float mesh_index_to_xpos(const uint8_t i) {
+    FORCE_INLINE static float mesh_index_to_xpos(const uint8_t i) {
       return i < GRID_MAX_POINTS_X ? pgm_read_float(&_mesh_index_to_xpos[i]) : MESH_MIN_X + i * (MESH_X_DIST);
     }
 
-    static inline float mesh_index_to_ypos(const uint8_t i) {
+    FORCE_INLINE static float mesh_index_to_ypos(const uint8_t i) {
       return i < GRID_MAX_POINTS_Y ? pgm_read_float(&_mesh_index_to_ypos[i]) : MESH_MIN_Y + i * (MESH_Y_DIST);
     }
 
@@ -324,7 +362,7 @@ class unified_bed_leveling {
       static void line_to_destination_cartesian(const float &fr, const uint8_t e);
     #endif
 
-    static inline bool mesh_is_valid() {
+    inline static bool mesh_is_valid() {
       for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++)
         for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++)
           if (isnan(z_values[x][y])) return false;
@@ -335,7 +373,4 @@ class unified_bed_leveling {
 
 extern unified_bed_leveling ubl;
 
-#define Z_VALUES(X,Y) ubl.z_values[X][Y]
-
-// Prevent debugging propagating to other files
-#include "../../../core/debug_out.h"
+#endif // UNIFIED_BED_LEVELING_H

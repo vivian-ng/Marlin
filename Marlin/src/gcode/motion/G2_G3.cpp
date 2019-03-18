@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -33,6 +33,10 @@
   #include "../../module/delta.h"
 #elif ENABLED(SCARA)
   #include "../../module/scara.h"
+#endif
+
+#if ENABLED(SCARA_FEEDRATE_SCALING) && ENABLED(AUTO_BED_LEVELING_BILINEAR)
+  #include "../../feature/bedlevel/abl/abl.h"
 #endif
 
 #if N_ARC_CORRECTION < 1
@@ -70,9 +74,6 @@ void plan_arc(
   float r_P = -offset[0], r_Q = -offset[1];
 
   const float radius = HYPOT(r_P, r_Q),
-              #if ENABLED(AUTO_BED_LEVELING_UBL)
-                start_L  = current_position[l_axis],
-              #endif
               center_P = current_position[p_axis] - r_P,
               center_Q = current_position[q_axis] - r_Q,
               rt_X = cart[p_axis] - center_P,
@@ -91,7 +92,7 @@ void plan_arc(
 
   const float flat_mm = radius * angular_travel,
               mm_of_travel = linear_travel ? HYPOT(flat_mm, linear_travel) : ABS(flat_mm);
-  if (mm_of_travel < 0.001f) return;
+  if (mm_of_travel < 0.001) return;
 
   uint16_t segments = FLOOR(mm_of_travel / (MM_PER_ARC_SEGMENT));
   if (segments == 0) segments = 1;
@@ -128,7 +129,7 @@ void plan_arc(
               linear_per_segment = linear_travel / segments,
               extruder_per_segment = extruder_travel / segments,
               sin_T = theta_per_segment,
-              cos_T = 1 - 0.5f * sq(theta_per_segment); // Small angle approximation
+              cos_T = 1 - 0.5 * sq(theta_per_segment); // Small angle approximation
 
   // Initialize the linear axis
   raw[l_axis] = current_position[l_axis];
@@ -138,11 +139,15 @@ void plan_arc(
 
   const float fr_mm_s = MMS_SCALED(feedrate_mm_s);
 
-  #if ENABLED(SCARA_FEEDRATE_SCALING)
-    const float inv_duration = fr_mm_s / MM_PER_ARC_SEGMENT;
-  #endif
-
   millis_t next_idle_ms = millis() + 200UL;
+
+  #if ENABLED(SCARA_FEEDRATE_SCALING)
+    // SCARA needs to scale the feed rate from mm/s to degrees/s
+    const float inv_segment_length = 1.0 / (MM_PER_ARC_SEGMENT),
+                inverse_secs = inv_segment_length * fr_mm_s;
+    float oldA = planner.position_float[A_AXIS],
+          oldB = planner.position_float[B_AXIS];
+  #endif
 
   #if N_ARC_CORRECTION > 1
     int8_t arc_recalc_count = N_ARC_CORRECTION;
@@ -182,48 +187,46 @@ void plan_arc(
     // Update raw location
     raw[p_axis] = center_P + r_P;
     raw[q_axis] = center_Q + r_Q;
-    #if ENABLED(AUTO_BED_LEVELING_UBL)
-      raw[l_axis] = start_L;
-      UNUSED(linear_per_segment);
-    #else
-      raw[l_axis] += linear_per_segment;
-    #endif
+    raw[l_axis] += linear_per_segment;
     raw[E_AXIS] += extruder_per_segment;
 
-    apply_motion_limits(raw);
+    clamp_to_software_endstops(raw);
 
-    #if HAS_LEVELING && !PLANNER_LEVELING
-      planner.apply_leveling(raw);
+    #if ENABLED(SCARA_FEEDRATE_SCALING)
+      // For SCARA scale the feed rate from mm/s to degrees/s
+      // i.e., Complete the angular vector in the given time.
+      inverse_kinematics(raw);
+      ADJUST_DELTA(raw);
+      if (!planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], raw[Z_AXIS], raw[E_AXIS], HYPOT(delta[A_AXIS] - oldA, delta[B_AXIS] - oldB) * inverse_secs, active_extruder))
+        break;
+      oldA = delta[A_AXIS]; oldB = delta[B_AXIS];
+    #elif HAS_UBL_AND_CURVES
+      float pos[XYZ] = { raw[X_AXIS], raw[Y_AXIS], raw[Z_AXIS] };
+      planner.apply_leveling(pos);
+      if (!planner.buffer_segment(pos[X_AXIS], pos[Y_AXIS], pos[Z_AXIS], raw[E_AXIS], fr_mm_s, active_extruder))
+        break;
+    #else
+      if (!planner.buffer_line_kinematic(raw, fr_mm_s, active_extruder))
+        break;
     #endif
-
-    if (!planner.buffer_line(raw, fr_mm_s, active_extruder, MM_PER_ARC_SEGMENT
-      #if ENABLED(SCARA_FEEDRATE_SCALING)
-        , inv_duration
-      #endif
-    ))
-      break;
   }
 
   // Ensure last segment arrives at target location.
-  COPY(raw, cart);
-  #if ENABLED(AUTO_BED_LEVELING_UBL)
-    raw[l_axis] = start_L;
+  #if ENABLED(SCARA_FEEDRATE_SCALING)
+    inverse_kinematics(cart);
+    ADJUST_DELTA(cart);
+    const float diff2 = HYPOT2(delta[A_AXIS] - oldA, delta[B_AXIS] - oldB);
+    if (diff2)
+      planner.buffer_segment(delta[A_AXIS], delta[B_AXIS], cart[Z_AXIS], cart[E_AXIS], SQRT(diff2) * inverse_secs, active_extruder);
+  #elif HAS_UBL_AND_CURVES
+    float pos[XYZ] = { cart[X_AXIS], cart[Y_AXIS], cart[Z_AXIS] };
+    planner.apply_leveling(pos);
+    planner.buffer_segment(pos[X_AXIS], pos[Y_AXIS], pos[Z_AXIS], cart[E_AXIS], fr_mm_s, active_extruder);
+  #else
+    planner.buffer_line_kinematic(cart, fr_mm_s, active_extruder);
   #endif
 
-  #if HAS_LEVELING && !PLANNER_LEVELING
-    planner.apply_leveling(raw);
-  #endif
-
-  planner.buffer_line(raw, fr_mm_s, active_extruder, MM_PER_ARC_SEGMENT
-    #if ENABLED(SCARA_FEEDRATE_SCALING)
-      , inv_duration
-    #endif
-  );
-
-  #if ENABLED(AUTO_BED_LEVELING_UBL)
-    raw[l_axis] = start_L;
-  #endif
-  COPY(current_position, raw);
+  COPY(current_position, cart);
 } // plan_arc
 
 /**
@@ -266,20 +269,19 @@ void GcodeSuite::G2_G3(const bool clockwise) {
       relative_mode = relative_mode_backup;
     #endif
 
-    float arc_offset[2] = { 0, 0 };
+    float arc_offset[2] = { 0.0, 0.0 };
     if (parser.seenval('R')) {
       const float r = parser.value_linear_units(),
                   p1 = current_position[X_AXIS], q1 = current_position[Y_AXIS],
                   p2 = destination[X_AXIS], q2 = destination[Y_AXIS];
       if (r && (p2 != p1 || q2 != q1)) {
-        const float e = clockwise ^ (r < 0) ? -1 : 1,            // clockwise -1/1, counterclockwise 1/-1
-                    dx = p2 - p1, dy = q2 - q1,                  // X and Y differences
-                    d = HYPOT(dx, dy),                           // Linear distance between the points
-                    dinv = 1/d,                                  // Inverse of d
-                    h = SQRT(sq(r) - sq(d * 0.5f)),              // Distance to the arc pivot-point
-                    mx = (p1 + p2) * 0.5f, my = (q1 + q2) * 0.5f,// Point between the two points
-                    sx = -dy * dinv, sy = dx * dinv,             // Slope of the perpendicular bisector
-                    cx = mx + e * h * sx, cy = my + e * h * sy;  // Pivot-point of the arc
+        const float e = clockwise ^ (r < 0) ? -1 : 1,           // clockwise -1/1, counterclockwise 1/-1
+                    dx = p2 - p1, dy = q2 - q1,                 // X and Y differences
+                    d = HYPOT(dx, dy),                          // Linear distance between the points
+                    h = SQRT(sq(r) - sq(d * 0.5)),              // Distance to the arc pivot-point
+                    mx = (p1 + p2) * 0.5, my = (q1 + q2) * 0.5, // Point between the two points
+                    sx = -dy / d, sy = dx / d,                  // Slope of the perpendicular bisector
+                    cx = mx + e * h * sx, cy = my + e * h * sy; // Pivot-point of the arc
         arc_offset[0] = cx - p1;
         arc_offset[1] = cy - q1;
       }
@@ -294,9 +296,10 @@ void GcodeSuite::G2_G3(const bool clockwise) {
       #if ENABLED(ARC_P_CIRCLES)
         // P indicates number of circles to do
         int8_t circles_to_do = parser.byteval('P');
-        if (!WITHIN(circles_to_do, 0, 100))
-          SERIAL_ERROR_MSG(MSG_ERR_ARC_ARGS);
-
+        if (!WITHIN(circles_to_do, 0, 100)) {
+          SERIAL_ERROR_START();
+          SERIAL_ERRORLNPGM(MSG_ERR_ARC_ARGS);
+        }
         while (circles_to_do--)
           plan_arc(current_position, arc_offset, clockwise);
       #endif
@@ -305,8 +308,11 @@ void GcodeSuite::G2_G3(const bool clockwise) {
       plan_arc(destination, arc_offset, clockwise);
       reset_stepper_timeout();
     }
-    else
-      SERIAL_ERROR_MSG(MSG_ERR_ARC_ARGS);
+    else {
+      // Bad arguments
+      SERIAL_ERROR_START();
+      SERIAL_ERRORLNPGM(MSG_ERR_ARC_ARGS);
+    }
   }
 }
 

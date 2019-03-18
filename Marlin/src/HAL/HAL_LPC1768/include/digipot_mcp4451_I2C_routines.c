@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016, 2017 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -22,8 +22,6 @@
 
 // adapted from  I2C/master/master.c example
 //   https://www-users.cs.york.ac.uk/~pcc/MCP/HAPR-Course-web/CMSIS/examples/html/master_8c_source.html
-
-#ifdef TARGET_LPC1768
 
 #include "../../../inc/MarlinConfigPre.h"
 
@@ -137,4 +135,3 @@ uint8_t digipot_mcp4451_send_byte(uint8_t data) {
 #endif
 
 #endif // MB(MKS_SBASE)
-#endif // TARGET_LPC1768

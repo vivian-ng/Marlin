@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -27,6 +27,8 @@
 
 /**
  * Description: HAL for AVR - SPI functions
+ *
+ * For __AVR__
  */
 
 #ifdef __AVR__
@@ -66,12 +68,10 @@ void spiBegin (void) {
 }
 
 
+//------------------------------------------------------------------------------
 #if DISABLED(SOFTWARE_SPI)
-
+  // functions for hardware SPI
   //------------------------------------------------------------------------------
-  // Hardware SPI
-  //------------------------------------------------------------------------------
-
   // make sure SPCR rate is in expected bits
   #if (SPR0 != 0 || SPR1 != 1)
     #error "unexpected SPCR bits"
@@ -95,13 +95,14 @@ void spiBegin (void) {
     SPSR = spiRate & 1 || spiRate == 6 ? 0 : _BV(SPI2X);
   }
 
+  //------------------------------------------------------------------------------
   /** SPI receive a byte */
   uint8_t spiRec(void) {
     SPDR = 0xFF;
     while (!TEST(SPSR, SPIF)) { /* Intentionally left empty */ }
     return SPDR;
   }
-
+  //------------------------------------------------------------------------------
   /** SPI read data  */
   void spiRead(uint8_t* buf, uint16_t nbyte) {
     if (nbyte-- == 0) return;
@@ -114,13 +115,13 @@ void spiBegin (void) {
     while (!TEST(SPSR, SPIF)) { /* Intentionally left empty */ }
     buf[nbyte] = SPDR;
   }
-
+  //------------------------------------------------------------------------------
   /** SPI send a byte */
   void spiSend(uint8_t b) {
     SPDR = b;
     while (!TEST(SPSR, SPIF)) { /* Intentionally left empty */ }
   }
-
+  //------------------------------------------------------------------------------
   /** SPI send block  */
   void spiSendBlock(uint8_t token, const uint8_t* buf) {
     SPDR = token;
@@ -190,21 +191,25 @@ void spiBegin (void) {
   }
 
 
-#else
-
+       //------------------------------------------------------------------------------
+#else  // SOFTWARE_SPI
+       //------------------------------------------------------------------------------
   /** nop to tune soft SPI timing */
   #define nop asm volatile ("\tnop\n")
 
   /** Set SPI rate */
   void spiInit(uint8_t spiRate) {
-    UNUSED(spiRate);  // nothing to do
+    // nothing to do
+    UNUSED(spiRate);
   }
 
   /** Begin SPI transaction, set clock, bit order, data mode */
   void spiBeginTransaction(uint32_t spiClock, uint8_t bitOrder, uint8_t dataMode) {
-    UNUSED(spiBeginTransaction);  // nothing to do
+    // nothing to do
+    UNUSED(spiBeginTransaction);
   }
 
+  //------------------------------------------------------------------------------
   /** Soft SPI receive byte */
   uint8_t spiRec() {
     uint8_t data = 0;
@@ -216,7 +221,8 @@ void spiBegin (void) {
     for (uint8_t i = 0; i < 8; i++) {
       WRITE(SCK_PIN, HIGH);
 
-      nop; // adjust so SCK is nice
+      // adjust so SCK is nice
+      nop;
       nop;
 
       data <<= 1;
@@ -225,45 +231,48 @@ void spiBegin (void) {
 
       WRITE(SCK_PIN, LOW);
     }
-
+    // enable interrupts
     sei();
     return data;
   }
-
+  //------------------------------------------------------------------------------
   /** Soft SPI read data */
   void spiRead(uint8_t* buf, uint16_t nbyte) {
     for (uint16_t i = 0; i < nbyte; i++)
       buf[i] = spiRec();
   }
-
+  //------------------------------------------------------------------------------
   /** Soft SPI send byte */
   void spiSend(uint8_t data) {
     // no interrupts during byte send - about 8µs
     cli();
     for (uint8_t i = 0; i < 8; i++) {
       WRITE(SCK_PIN, LOW);
+
       WRITE(MOSI_PIN, data & 0x80);
+
       data <<= 1;
+
       WRITE(SCK_PIN, HIGH);
     }
-
-    nop; // hold SCK high for a few ns
+    // hold SCK high for a few ns
+    nop;
     nop;
     nop;
     nop;
 
     WRITE(SCK_PIN, LOW);
-
+    // enable interrupts
     sei();
   }
-
+  //------------------------------------------------------------------------------
   /** Soft SPI send block */
   void spiSendBlock(uint8_t token, const uint8_t* buf) {
     spiSend(token);
     for (uint16_t i = 0; i < 512; i++)
       spiSend(buf[i]);
   }
+#endif  // SOFTWARE_SPI
 
-#endif // SOFTWARE_SPI
 
 #endif // __AVR__

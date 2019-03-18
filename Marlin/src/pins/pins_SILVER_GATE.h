@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -21,10 +21,12 @@
  */
 
 #if !defined(__AVR_ATmega1281__) && !defined(__AVR_ATmega2561__)
-  #error "Oops! Select 'Silvergate' in 'Tools > Board.'"
+  #error Oops!  Make sure you have 'Silvergate' selected from the 'Tools -> Boards' menu.
 #endif
 
-#define BOARD_NAME "Silver Gate"
+#ifndef BOARD_NAME
+  #define BOARD_NAME "Silver Gate"
+#endif
 
 #define X_STEP_PIN         43
 #define X_DIR_PIN          44

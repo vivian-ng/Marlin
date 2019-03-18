@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,13 +19,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
 /**
  * Fast I/O Routines for Teensy 3.5 and Teensy 3.6
  * Use direct port manipulation to save scads of processor time.
  * Contributed by Triffid_Hunter and modified by Kliment, thinkyhead, Bob-the-Kuhn, et.al.
  */
+
+#ifndef _FASTIO_TEENSY_H
+#define _FASTIO_TEENSY_H
 
 #ifndef MASK
   #define MASK(PIN) (1 << PIN)
@@ -42,7 +44,7 @@
  * Why double up on these macros? see http://gcc.gnu.org/onlinedocs/cpp/Stringification.html
  */
 
-#define _READ(P) bool(CORE_PIN ## P ## _PINREG & CORE_PIN ## P ## _BITMASK)
+#define _READ(p) bool(CORE_PIN ## p ## _PINREG & CORE_PIN ## p ## _BITMASK)
 
 #define _WRITE(P,V) do{ \
   if (V) CORE_PIN ## P ## _PORTSET = CORE_PIN ## P ## _BITMASK; \
@@ -78,22 +80,16 @@
 #define SET_INPUT(IO)         _SET_INPUT(IO)
 #define SET_INPUT_PULLUP(IO)  _SET_INPUT_PULLUP(IO)
 #define SET_OUTPUT(IO)        _SET_OUTPUT(IO)
-#define SET_PWM(IO)            SET_OUTPUT(IO)
 
 #define GET_INPUT(IO)         _GET_INPUT(IO)
 #define GET_OUTPUT(IO)        _GET_OUTPUT(IO)
 
 #define OUT_WRITE(IO,V)       do{ SET_OUTPUT(IO); WRITE(IO,V); }while(0)
 
-// digitalRead/Write wrappers
-#define extDigitalRead(IO)    digitalRead(IO)
-#define extDigitalWrite(IO,V) digitalWrite(IO,V)
-
-#define PWM_PIN(P)            digitalPinHasPWM(P)
-#define USEABLE_HARDWARE_PWM(P) PWM_PIN(P)
-
 /**
  * Ports, functions, and pins
  */
 
 #define DIO0_PIN 8
+
+#endif  /* _FASTIO_TEENSY_H */

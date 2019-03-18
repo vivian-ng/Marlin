@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -30,14 +30,14 @@
  * Adapted to the STM32F4 HAL
  */
 
-#if defined(STM32GENERIC) && defined(STM32F4)
+#if defined(STM32F4) || defined(STM32F4xx)
 
 // --------------------------------------------------------------------------
 // Includes
 // --------------------------------------------------------------------------
 
 #include "HAL.h"
-#include "../shared/HAL_SPI.h"
+#include "../HAL_SPI.h"
 #include "pins_arduino.h"
 #include "spi_pins.h"
 #include "../../core/macros.h"
@@ -173,4 +173,4 @@ void spiSendBlock(uint8_t token, const uint8_t* buf) {
 
 #endif // SOFTWARE_SPI
 
-#endif // STM32GENERIC && STM32F4
+#endif // STM32F4 || STM32F4xx

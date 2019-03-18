@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,7 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
 /**
  * \file
@@ -32,6 +31,9 @@
  *
  * This file is part of the Arduino Sd2Card Library
  */
+#ifndef _SDBASEFILE_H_
+#define _SDBASEFILE_H_
+
 
 #include "SdFatConfig.h"
 #include "SdVolume.h"
@@ -108,7 +110,7 @@ static inline uint16_t FAT_YEAR(uint16_t fatDate) { return 1980 + (fatDate >> 9)
  *
  * \return Extracted month [1,12]
  */
-static inline uint8_t FAT_MONTH(uint16_t fatDate) { return (fatDate >> 5) & 0xF; }
+static inline uint8_t FAT_MONTH(uint16_t fatDate) { return (fatDate >> 5) & 0XF; }
 
 /**
  * day part of FAT directory date field
@@ -385,3 +387,5 @@ class SdBaseFile {
   bool openCachedEntry(uint8_t cacheIndex, uint8_t oflags);
   dir_t* readDirCache();
 };
+
+#endif // _SDBASEFILE_H_

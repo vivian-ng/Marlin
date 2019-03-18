@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -60,10 +60,12 @@
  */
 
 #ifndef __SAM3X8E__
-  #error "Oops! Select 'Arduino Due' in 'Tools > Board.'"
+  #error "Oops!  Make sure you have 'Arduino Due' selected from the 'Tools -> Boards' menu."
 #endif
 
-#define BOARD_NAME "RAMPS-SMART"
+#ifndef BOARD_NAME
+  #define BOARD_NAME       "RAMPS-SMART"
+#endif
 
 #define IS_RAMPS_SMART
 #include "pins_RAMPS.h"
@@ -87,11 +89,12 @@
 #define TEMP_BED_PIN       11   // Analog Input
 
 // SPI for Max6675 or Max31855 Thermocouple
-#undef MAX6675_SS_PIN
 #if DISABLED(SDSUPPORT)
-  #define MAX6675_SS_PIN   67   // Do not use pin 53 if there is even the remote possibility of using Display/SD card
+  #undef MAX6675_SS
+  #define MAX6675_SS       67   // Do not use pin 53 if there is even the remote possibility of using Display/SD card
 #else
-  #define MAX6675_SS_PIN   67   // Do not use pin 49 as this is tied to the switch inside the SD card socket to detect if there is an SD card present
+  #undef MAX6675_SS
+  #define MAX6675_SS       67   // Do not use pin 49 as this is tied to the switch inside the SD card socket to detect if there is an SD card present
 #endif
 
 //

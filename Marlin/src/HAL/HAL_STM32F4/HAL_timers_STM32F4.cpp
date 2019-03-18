@@ -1,7 +1,7 @@
 /**
  * Marlin 3D Printer Firmware
  *
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
  * Copyright (c) 2015-2016 Nico Tonnhofer wurstnase.reprap@gmail.com
  *
@@ -20,7 +20,7 @@
  *
  */
 
-#if defined(STM32GENERIC) && defined(STM32F4)
+#if defined(STM32F4) || defined(STM32F4xx)
 
 // --------------------------------------------------------------------------
 // Includes
@@ -69,11 +69,11 @@ stm32f4_timer_t TimerHandle[NUM_HARDWARE_TIMERS];
 // Public functions
 // --------------------------------------------------------------------------
 
-bool timers_initialized[NUM_HARDWARE_TIMERS] = {false};
+bool timers_initialised[NUM_HARDWARE_TIMERS] = {false};
 
 void HAL_timer_start(const uint8_t timer_num, const uint32_t frequency) {
 
-  if (!timers_initialized[timer_num]) {
+  if (!timers_initialised[timer_num]) {
     constexpr uint32_t step_prescaler = STEPPER_TIMER_PRESCALE - 1,
                        temp_prescaler = TEMP_TIMER_PRESCALE - 1;
     switch (timer_num) {
@@ -91,7 +91,7 @@ void HAL_timer_start(const uint8_t timer_num, const uint32_t frequency) {
           TimerHandle[timer_num].irqHandle = TC5_Handler;
           TimerHandleInit(&TimerHandle[timer_num], (((HAL_TIMER_RATE) / step_prescaler) / frequency) - 1, step_prescaler);
         #endif
-        HAL_NVIC_SetPriority(STEP_TIMER_IRQ_ID, 1, 0);
+        HAL_NVIC_SetPriority(STEP_TIMER_IRQ_ID, 6, 0);
         break;
 
       case TEMP_TIMER_NUM:
@@ -111,7 +111,7 @@ void HAL_timer_start(const uint8_t timer_num, const uint32_t frequency) {
         HAL_NVIC_SetPriority(TEMP_TIMER_IRQ_ID, 2, 0);
         break;
     }
-    timers_initialized[timer_num] = true;
+    timers_initialised[timer_num] = true;
   }
 
   #ifdef STM32GENERIC
@@ -156,4 +156,4 @@ bool HAL_timer_interrupt_enabled(const uint8_t timer_num) {
   return false;
 }
 
-#endif // STM32GENERIC && STM32F4
+#endif // STM32F4 || STM32F4xx

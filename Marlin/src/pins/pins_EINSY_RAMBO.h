@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -25,16 +25,18 @@
  */
 
 #ifndef __AVR_ATmega2560__
-  #error "Oops! Select 'Arduino Mega 2560 or Rambo' in 'Tools > Board.'"
+  #error "Oops!  Make sure you have 'Arduino Mega 2560 or Rambo' selected from the 'Tools -> Boards' menu."
 #endif
 
-#define BOARD_NAME "Einsy Rambo"
+#define BOARD_NAME         "Einsy Rambo"
 
 //
 // TMC2130 Configuration_adv defaults for EinsyRambo
 //
-#if !AXIS_DRIVER_TYPE_X(TMC2130) || !AXIS_DRIVER_TYPE_Y(TMC2130) || !AXIS_DRIVER_TYPE_Z(TMC2130) || !AXIS_DRIVER_TYPE_E0(TMC2130)
-  #error "You must set ([XYZ]|E0)_DRIVER_TYPE to TMC2130 in Configuration.h for EinsyRambo."
+#if DISABLED(HAVE_TMC2130)
+  #error "You must enable TMC2130 support in Configuration_adv.h for EinsyRambo."
+#elif DISABLED(X_IS_TMC2130) || DISABLED(Y_IS_TMC2130) || DISABLED(Z_IS_TMC2130) || DISABLED(E0_IS_TMC2130)
+  #error "You must enable ([XYZ]|E0)_IS_TMC2130 in Configuration_adv.h for EinsyRambo."
 #endif
 
 // TMC2130 Diag Pins (currently just for reference)
@@ -118,10 +120,7 @@
 #ifndef FAN_PIN
   #define FAN_PIN           8
 #endif
-
-#ifndef FAN1_PIN
-  #define FAN1_PIN          6
-#endif
+#define FAN1_PIN            6
 
 //
 // Misc. Functions

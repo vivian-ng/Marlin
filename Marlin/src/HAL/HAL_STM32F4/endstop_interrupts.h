@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -20,12 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
+
+#ifndef _ENDSTOP_INTERRUPTS_H_
+#define _ENDSTOP_INTERRUPTS_H_
 
 #include "../../module/endstops.h"
 
 // One ISR for all EXT-Interrupts
-void endstop_ISR(void) { endstops.update(); }
+void endstop_ISR(void) { endstops.check_possible_change(); }
 
 void setup_endstop_interrupts(void) {
   #if HAS_X_MAX
@@ -52,13 +54,9 @@ void setup_endstop_interrupts(void) {
   #if HAS_Z2_MIN
     attachInterrupt(Z2_MIN_PIN, endstop_ISR, CHANGE);
   #endif
-  #if HAS_Z3_MAX
-    attachInterrupt(Z3_MAX_PIN, endstop_ISR, CHANGE);
-  #endif
-  #if HAS_Z3_MIN
-    attachInterrupt(Z3_MIN_PIN, endstop_ISR, CHANGE);
-  #endif
   #if HAS_Z_MIN_PROBE_PIN
     attachInterrupt(Z_MIN_PROBE_PIN, endstop_ISR, CHANGE);
   #endif
 }
+
+#endif //_ENDSTOP_INTERRUPTS_H_

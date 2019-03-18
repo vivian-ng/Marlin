@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -36,7 +36,6 @@
 //
 // MOSFET changes
 //
-#define RAMPS_D9_PIN        8   // FAN (by default)
 #define RAMPS_D10_PIN       9   // EXTRUDER 1
 #define MOSFET_D_PIN       12   // EXTRUDER 2 or FAN
 
@@ -73,11 +72,11 @@
 #define TEMP_BED_PIN       15   // Analog Input
 
 // SPI for Max6675 or Max31855 Thermocouple
-#undef MAX6675_SS_PIN
+#undef MAX6675_SS
 #if DISABLED(SDSUPPORT)
-  #define MAX6675_SS_PIN   53   // Don't use pin 53 if there is even the remote possibility of using Display/SD card
+  #define MAX6675_SS       53   // Don't use pin 53 if there is even the remote possibility of using Display/SD card
 #else
-  #define MAX6675_SS_PIN   49   // Don't use pin 49 as this is tied to the switch inside the SD card socket to detect if there is an SD card present
+  #define MAX6675_SS       49   // Don't use pin 49 as this is tied to the switch inside the SD card socket to detect if there is an SD card present
 #endif
 
 //

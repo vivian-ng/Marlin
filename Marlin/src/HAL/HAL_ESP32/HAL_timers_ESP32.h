@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,7 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
+
+#ifndef _HAL_TIMERS_ESP32_H
+#define _HAL_TIMERS_ESP32_H
 
 // --------------------------------------------------------------------------
 // Includes
@@ -43,15 +45,9 @@ typedef uint64_t hal_timer_t;
 
 #define HAL_TIMER_RATE APB_CLK_FREQ // frequency of timer peripherals
 
-#if ENABLED(I2S_STEPPER_STREAM)
-  #define STEPPER_TIMER_PRESCALE     1
-  #define STEPPER_TIMER_RATE         250000                           // 250khz, 4us pulses of i2s word clock
-  #define STEPPER_TIMER_TICKS_PER_US ((STEPPER_TIMER_RATE) / 1000000) // stepper timer ticks per µs // wrong would be 0.25
-#else
-  #define STEPPER_TIMER_PRESCALE     40
-  #define STEPPER_TIMER_RATE         (HAL_TIMER_RATE / STEPPER_TIMER_PRESCALE) // frequency of stepper timer, 2MHz
-  #define STEPPER_TIMER_TICKS_PER_US ((STEPPER_TIMER_RATE) / 1000000)          // stepper timer ticks per µs
-#endif
+#define STEPPER_TIMER_PRESCALE     40
+#define STEPPER_TIMER_RATE         (HAL_TIMER_RATE / STEPPER_TIMER_PRESCALE) // frequency of stepper timer, 2MHz
+#define STEPPER_TIMER_TICKS_PER_US ((STEPPER_TIMER_RATE) / 1000000)          // stepper timer ticks per µs
 
 #define STEP_TIMER_MIN_INTERVAL   8 // minimum time in µs between stepper interrupts
 
@@ -69,8 +65,8 @@ typedef uint64_t hal_timer_t;
 #define ENABLE_TEMPERATURE_INTERRUPT()  HAL_timer_enable_interrupt(TEMP_TIMER_NUM)
 #define DISABLE_TEMPERATURE_INTERRUPT() HAL_timer_disable_interrupt(TEMP_TIMER_NUM)
 
-#define HAL_TEMP_TIMER_ISR() extern "C" void tempTC_Handler(void)
-#define HAL_STEP_TIMER_ISR() extern "C" void stepTC_Handler(void)
+#define HAL_TEMP_TIMER_ISR extern "C" void tempTC_Handler(void)
+#define HAL_STEP_TIMER_ISR extern "C" void stepTC_Handler(void)
 
 extern "C" void tempTC_Handler(void);
 extern "C" void stepTC_Handler(void);
@@ -102,9 +98,17 @@ void HAL_timer_set_compare(const uint8_t timer_num, const hal_timer_t count);
 hal_timer_t HAL_timer_get_compare(const uint8_t timer_num);
 hal_timer_t HAL_timer_get_count(const uint8_t timer_num);
 
+// if counter too high then bump up compare
+FORCE_INLINE static void HAL_timer_restrain(const uint8_t timer_num, const uint16_t interval_ticks) {
+  const hal_timer_t mincmp = HAL_timer_get_count(timer_num) + interval_ticks;
+  if (HAL_timer_get_compare(timer_num) < mincmp) HAL_timer_set_compare(timer_num, mincmp);
+}
+
 void HAL_timer_enable_interrupt(const uint8_t timer_num);
 void HAL_timer_disable_interrupt(const uint8_t timer_num);
 bool HAL_timer_interrupt_enabled(const uint8_t timer_num);
 
 #define HAL_timer_isr_prologue(TIMER_NUM)
 #define HAL_timer_isr_epilogue(TIMER_NUM)
+
+#endif // _HAL_TIMERS_ESP32_H

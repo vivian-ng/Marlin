@@ -1,7 +1,7 @@
 /**
  * Marlin 3D Printer Firmware
  *
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
  * Copyright (c) 2017 Victor Perez
  *
@@ -19,11 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
 /**
  * HAL for stm32duino.com based on Libmaple and compatible (STM32F1)
  */
+
+#ifndef _HAL_TIMERS_STM32F1_H
+#define _HAL_TIMERS_STM32F1_H
 
 // --------------------------------------------------------------------------
 // Includes
@@ -85,8 +87,9 @@ timer_dev* get_timer_dev(int number);
 
 // TODO change this
 
-#define HAL_TEMP_TIMER_ISR() extern "C" void tempTC_Handler(void)
-#define HAL_STEP_TIMER_ISR() extern "C" void stepTC_Handler(void)
+
+#define HAL_TEMP_TIMER_ISR extern "C" void tempTC_Handler(void)
+#define HAL_STEP_TIMER_ISR extern "C" void stepTC_Handler(void)
 
 extern "C" void tempTC_Handler(void);
 extern "C" void stepTC_Handler(void);
@@ -148,6 +151,11 @@ FORCE_INLINE static hal_timer_t HAL_timer_get_compare(const uint8_t timer_num) {
   }
 }
 
+FORCE_INLINE static void HAL_timer_restrain(const uint8_t timer_num, const uint16_t interval_ticks) {
+  const hal_timer_t mincmp = HAL_timer_get_count(timer_num) + interval_ticks;
+  if (HAL_timer_get_compare(timer_num) < mincmp) HAL_timer_set_compare(timer_num, mincmp);
+}
+
 FORCE_INLINE static void HAL_timer_isr_prologue(const uint8_t timer_num) {
   switch (timer_num) {
   case STEP_TIMER_NUM:
@@ -164,3 +172,5 @@ FORCE_INLINE static void HAL_timer_isr_prologue(const uint8_t timer_num) {
 }
 
 #define HAL_timer_isr_epilogue(TIMER_NUM)
+
+#endif // _HAL_TIMERS_STM32F1_H

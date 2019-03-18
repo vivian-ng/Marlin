@@ -24,20 +24,23 @@
  * THE SOFTWARE.
  *
  */
-#pragma once
 
-#include <stdint.h>
+#include "../../inc/MarlinConfig.h"
+
+// ensure this library description is only included once
+#ifndef _TMC26XSTEPPER_H_
+#define _TMC26XSTEPPER_H_
 
 //! return value for TMC26XStepper.getOverTemperature() if there is a overtemperature situation in the TMC chip
 /*!
- * This warning indicates that the TMC chip is too warm.
+ * This warning indicates that the TCM chip is too warm.
  * It is still working but some parameters may be inferior.
  * You should do something against it.
  */
 #define TMC26X_OVERTEMPERATURE_PREWARING 1
 //! return value for TMC26XStepper.getOverTemperature() if there is a overtemperature shutdown in the TMC chip
 /*!
- * This warning indicates that the TMC chip is too warm to operate and has shut down to prevent damage.
+ * This warning indicates that the TCM chip is too warm to operate and has shut down to prevent damage.
  * It will stop working until it cools down again.
  * If you encouter this situation you must do something against it. Like reducing the current or improving the PCB layout
  * and/or heat management.
@@ -76,166 +79,171 @@
  * \class TMC26XStepper
  * \brief Class representing a TMC26X stepper driver
  *
- * To use one of these drivers in your code create an object of its class:
+ * In order to use one fo those drivers in your Arduino code you have to create an object of that class:
  * \code
- * TMC26XStepper tmc_stepper = TMC26XStepper(200,1,2,3,500);
+ * TMC26XStepper stepper = TMC26XStepper(200,1,2,3,500);
  * \endcode
- * see TMC26XStepper(int16_t number_of_steps, int16_t cs_pin, int16_t dir_pin, int16_t step_pin, uint16_t rms_current)
+ * see TMC26XStepper(int number_of_steps, int cs_pin, int dir_pin, int step_pin, unsigned int rms_current)
  *
- * Keep in mind that you need to start the driver with start() in order to configure the TMC26X.
+ * Keep in mind that you need to start the driver with start() in order to get the TMC26X configured.
  *
- * The most important function is move(). It checks if the motor requires a step. It's important to call move() as
- * often as possible in loop(). I suggest using a very fast loop routine and always call move() at the beginning or end.
+ * The most important function is the move(). It checks if the motor has to do a step or not.
+ * It is important that you call move() as often as possible in your Arduino loop() routine. I suggest
+ * to use a very fast loop routine and always call it at the beginning or the end.
  *
- * To move you must set a movement speed with setSpeed(). The speed is a positive value, setting the RPM.
+ * In order to move you have to provide a movement speed with setSpeed(). The speed is a positive value setting
+ * the rotations per minute.
  *
  * To really move the motor you have to call step() to tell the driver to move the motor the given number
- * of steps in the given direction. Positive values move the motor in one direction, negative values in the other.
+ * of steps in the given direction. Positive values move the motor in one direction, negative values in the other direction.
  *
- * You can check with isMoving() if the motor is still moving or stop it abruptly with stop().
+ * You can check with isMoving() if the mototr is still moving or stop it  apruptely with stop().
  */
 class TMC26XStepper {
   public:
     /*!
-     * \brief Create a new representation of a stepper motor connected to a TMC26X stepper driver
+     * \brief creates a new represenatation of a stepper motor connected to a TMC26X stepper driver
      *
-     * Main constructor. If in doubt use this. All parameters must be provided as described below.
+     * This is the main constructor. If in doubt use this. You must provide all parameters as described below.
      *
-     * \param number_of_steps Number of steps the motor has per rotation.
-     * \param cs_pin          Arduino pin connected to the Client Select Pin (!CS) of the TMC26X for SPI.
-     * \param dir_pin         Arduino pin connected to the DIR input of the TMC26X.
-     * \param step_pin        Arduino pin connected to the STEP pin of the TMC26X.
-     * \param rms_current     Maximum current to provide to the motor in mA (!). A value of 200 will send up to 200mA to the motor.
-     * \param resistor        Current sense resistor in milli-Ohm, defaults to 0.15 Ohm (or 150 milli-Ohm) as in the TMC260 Arduino Shield.
+     * \param number_of_steps the number of steps the motor has per rotation.
+     * \param cs_pin The Arduino pin you have connected the Cient Select Pin (!CS) of the TMC26X for SPI
+     * \param dir_pin the number of the Arduino pin the Direction input of the TMC26X is connected
+     * \param step_pin the number of the Arduino pin the step pin of the TMC26X driver is connected.
+     * \param rms_current the maximum current to privide to the motor in mA (!). A value of 200 would send up to 200mA to the motor
+     * \param resistor the current sense resistor in milli Ohm, defaults to ,15 Ohm ( or 150 milli Ohm) as in the TMC260 Arduino Shield
      *
-     * You must also call TMC26XStepper.start() to configure the stepper driver for use.
+     * Keep in mind that you must also call TMC26XStepper.start() in order to configure the stepper driver for use.
      *
-     * By default the Constant Off Time chopper is used. See TMC26XStepper.setConstantOffTimeChopper() for details.
-     * This should work on most motors (YMMV). You may want to configure and use the Spread Cycle Chopper. See setSpreadCycleChopper().
+     * By default the Constant Off Time chopper is used, see TCM262Stepper.setConstantOffTimeChopper() for details.
+     * This should work on most motors (YMMV). You may want to configure and use the Spread Cycle Chopper, see  setSpreadCycleChopper().
      *
-     * By default a microstepping of 1/32 is used to provide a smooth motor run while still giving a good progression per step.
-     * Change stepping by sending setMicrosteps() a different value.
+     * By default a microstepping of 1/32th is used to provide a smooth motor run, while still giving a good progression per step.
+     * You can select a different stepping with setMicrosteps() to aa different value.
      * \sa start(), setMicrosteps()
      */
-    TMC26XStepper(const int16_t in_steps, int16_t cs_pin, int16_t dir_pin, int16_t step_pin, uint16_t current, uint16_t resistor=100); //resistor=150
+    TMC26XStepper(int number_of_steps, int cs_pin, int dir_pin, int step_pin, unsigned int current, unsigned int resistor=100); //resistor=150
 
     /*!
-     * \brief Configure and start the TMC26X stepper driver. Before this is called the stepper driver is nonfunctional.
+     * \brief configures and starts the TMC26X stepper driver. Before you called this function the stepper driver is in nonfunctional mode.
      *
-     * Configure the TMC26X stepper driver for the given values via SPI.
-     * Most member functions are non-functional if the driver has not been started,
-     * therefore it is best to call this in setup().
+     * This routine configures the TMC26X stepper driver for the given values via SPI.
+     * Most member functions are non functional if the driver has not been started.
+     * Therefore it is best to call this in your Arduino setup() function.
      */
     void start();
 
     /*!
-     * \brief Reset the stepper in unconfigured mode.
+     * \brief resets the stepper in unconfigured mode.
      *
-     * Allows start to be called again. It doesn't change the internal stepper
-     * configuration or the desired configuration. It just marks the stepper as
-     * not-yet-started. The stepper doesn't need to be reconfigured before
-     * starting again, and is not reset to any factory settings.
-     * It must be reset intentionally.
+     * This routine enables you to call start again. It does not change anything
+     * in the internal stepper configuration or the desired configuration.
+     * It just marks the stepper as not yet startet. You do not have to reconfigure
+     * the stepper to start it again, but it is not reset to any factory settings
+     * this has to be configured back by yourself.
      * (Hint: Normally you do not need this function)
      */
     void un_start();
 
 
     /*!
-     * \brief Set the rotation speed in RPM.
-     * \param whatSpeed the desired speed in RPM.
+     * \brief Sets the rotation speed in revolutions per minute.
+     * \param whatSpeed the desired speed in rotations per minute.
      */
-    void setSpeed(uint16_t whatSpeed);
+    void setSpeed(unsigned int whatSpeed);
 
     /*!
-     * \brief Report the currently selected speed in RPM.
+     * \brief reads out the currently selected speed in revolutions per minute.
      * \sa setSpeed()
      */
-    uint16_t getSpeed(void);
+    unsigned int getSpeed(void);
 
     /*!
      * \brief Set the number of microsteps in 2^i values (rounded) up to 256
      *
-     * This method sets the number of microsteps per step in 2^i interval.
-     * It accepts 1, 2, 4, 16, 32, 64, 128 or 256 as valid microsteps.
-     * Other values will be rounded down to the next smaller value (e.g., 3 gives a microstepping of 2).
+     * This method set's the number of microsteps per step in 2^i interval.
+     * This means you can select 1, 2, 4, 16, 32, 64, 128 or 256 as valid microsteps.
+     * If you give any other value it will be rounded to the next smaller number (3 would give a microstepping of 2).
      * You can always check the current microstepping with getMicrosteps().
      */
-    void setMicrosteps(const int16_t in_steps);
+    void setMicrosteps(int number_of_steps);
 
     /*!
-     * \brief Return the effective current number of microsteps selected.
+     * \brief returns the effective current number of microsteps selected.
      *
-     * Always returns the effective number of microsteps.
-     * This may be different from the micro-steps set in setMicrosteps() since it is rounded to 2^i.
+     * This function always returns the effective number of microsteps.
+     * This can be a bit different than the micro steps set in setMicrosteps() since it is rounded to 2^i.
      *
      * \sa setMicrosteps()
      */
-    int16_t getMicrosteps(void);
+    int getMicrosteps(void);
 
     /*!
-     * \brief Initiate a movement with the given number of steps. Positive values move in one direction, negative in the other.
+     * \brief Initiate a movement for the given number of steps. Positive numbers move in one, negative numbers in the other direction.
      *
      * \param number_of_steps The number of steps to move the motor.
      * \return 0 if the motor was not moving and moves now. -1 if the motor is moving and the new steps could not be set.
      *
-     * If the previous movement is incomplete the function returns -1 and doesn't change the steps to move the motor.
-     * If the motor does not move it returns 0.
+     * If the previous movement is not finished yet the function will return -1 and not change the steps to move the motor.
+     * If the motor does not move it return 0
      *
-     * The movement direction is determined by the sign of the steps parameter. The motor direction in machine space
-     * cannot be determined, as it depends on the construction of the motor and how it functions in the drive system.
+     * The direction of the movement is indicated by the sign of the steps parameter. It is not determinable if positive values are right
+     * or left This depends on the internal construction of the motor and how you connected it to the stepper driver.
      *
-     * For safety, verify with isMoving() or even use stop() to stop the motor before giving it new step directions.
+     * You can always verify with isMoving() or even use stop() to stop the motor before giving it new step directions.
      * \sa isMoving(), getStepsLeft(), stop()
      */
-    char step(int16_t number_of_steps);
+    char step(int number_of_steps);
 
     /*!
-     * \brief Central movement method. Must be called as often as possible in the loop function and is very fast.
+     * \brief Central movement method, must be called as often as possible in the lopp function and is very fast.
      *
-     * Check if the motor still has to move and whether the wait-to-step interval has expired, and manages the
-     * number of steps remaining to fulfill the current move command.
+     * This routine checks if the motor still has to move, if the waiting delay has passed to send a new step command to the motor
+     * and manages the number of steps yet to move to fulfill the current move command.
      *
-     * This function is implemented to be as fast as possible, so call it as often as possible in your loop.
-     * It should be invoked with as frequently and with as much regularity as possible.
+     * This function is implemented to be as fast as possible to call it as often as possible in your loop routine.
+     * The more regurlarly you call this function the better. In both senses of 'regularly': Calling it as often as
+     * possible is not a bad idea and if you even manage that the intervals you call this function are not too irregular helps too.
      *
-     * This can be called even when the motor is known not to be moving. It will simply return.
+     * You can call this routine even if you know that the motor is not moving. It introduces just a very small penalty in your code.
+     * You must not call isMoving() to determine if you need to call this function, since taht is done internally already and only
+     * slows down you code.
      *
-     * The frequency with which this function is called determines the top stepping speed of the motor.
-     * It is recommended to call this using a hardware timer to ensure regular invocation.
+     * How often you call this function directly influences your top moving speed for the motor. It may be a good idea to call this
+     * from a timer overflow interrupt to ensure proper calling.
      * \sa step()
      */
     char move(void);
 
     /*!
-     * \brief Check whether the last movement command is done.
+     * \brief checks if the motor still has to move to fulfill the last movement command.
      * \return 0 if the motor stops, -1 if the motor is moving.
      *
-     * Used to determine if the motor is ready for new movements.
+     * This method can be used to determine if the motor is ready for new movements.
      *\sa step(), move()
      */
     char isMoving(void);
 
     /*!
      * \brief Get the number of steps left in the current movement.
-     * \return The number of steps left in the movement. Always positive.
+     * \return The number of steps left in the movement. This number is always positive.
      */
-    uint16_t getStepsLeft(void);
+    unsigned int getStepsLeft(void);
 
     /*!
-     * \brief Stop the motor immediately.
+     * \brief Stops the motor regardless if it moves or not.
      * \return -1 if the motor was moving and is really stoped or 0 if it was not moving at all.
      *
-     * This method directly and abruptly stops the motor and may be used as an emergency stop.
+     * This method directly and apruptely stops the motor and may be used as an emergency stop.
      */
     char stop(void);
 
     /*!
-     * \brief Set and configure the classical Constant Off Timer Chopper
-     * \param constant_off_time       The off time setting controls the minimum chopper frequency. For most applications an off time within the range of 5μs to 20μs will fit. Setting this parameter to zero completely disables all driver transistors and the motor can free-wheel. 0: chopper off, 1:15: off time setting (1 will work with minimum blank time of 24 clocks)
-     * \param blank_time              Comparator blank time. This duration needs to safely cover the duration of the switching event and the ringing on the sense resistor. For most low current drivers, a setting of 1 or 2 is good. For high current applications with large MOSFETs, a setting of 2 or 3 will be required. 0 (min setting) … (3) amx setting
+     * \brief Sets and configure the classical Constant Off Timer Chopper
+     * \param constant_off_time The off time setting controls the minimum chopper frequency. For most applications an off time within the range of 5μs to 20μs will fit. Setting this parameter to zero completely disables all driver transistors and the motor can free-wheel. 0: chopper off, 1:15: off time setting (1 will work with minimum blank time of 24 clocks)
+     * \param blank_time Selects the comparator blank time. This time needs to safely cover the switching event and the duration of the ringing on the sense resistor. For most low current drivers, a setting of 1 or 2 is good. For high current applications with large MOSFETs, a setting of 2 or 3 will be required. 0 (min setting) … (3) amx setting
      * \param fast_decay_time_setting Fast decay time setting. Controls the portion of fast decay for each chopper cycle. 0: slow decay only, 1…15: duration of fast decay phase
-     * \param sine_wave_offset        Sine wave offset. Controls the sine wave offset. A positive offset corrects for zero crossing error. -3…-1: negative offset, 0: no offset,1…12: positive offset
+     * \param sine_wave_offset Sine wave offset. Controls the sine wave offset. A positive offset corrects for zero crossing error. -3…-1: negative offset, 0: no offset,1…12: positive offset
      * \param use_curreent_comparator Selects usage of the current comparator for termination of the fast decay cycle. If current comparator is enabled, it terminates the fast decay cycle in case the current reaches a higher negative value than the actual positive value. (0 disable, -1 enable).
      *
      * The classic constant off time chopper uses a fixed portion of fast decay following each on phase.
@@ -254,7 +262,7 @@ class TMC26XStepper {
      * \sa setSpreadCycleChoper() for other alternatives.
      * \sa setRandomOffTime() for spreading the noise over a wider spectrum
      */
-    void setConstantOffTimeChopper(char constant_off_time, char blank_time, char fast_decay_time_setting, char sine_wave_offset, uint8_t use_current_comparator);
+    void setConstantOffTimeChopper(char constant_off_time, char blank_time, char fast_decay_time_setting, char sine_wave_offset, unsigned char use_current_comparator);
 
     /*!
      * \brief Sets and configures with spread cycle chopper.
@@ -302,7 +310,7 @@ class TMC26XStepper {
      * \param current the maximum motor current in mA
      * \sa getCurrent(), getCurrentCurrent()
      */
-    void setCurrent(uint16_t current);
+    void setCurrent(unsigned int current);
 
     /*!
      * \brief readout the motor maximum current in mA (1000 is an Amp)
@@ -310,12 +318,12 @@ class TMC26XStepper {
      * \return the maximum motor current in milli amps
      * \sa getCurrentCurrent()
      */
-    uint16_t getCurrent(void);
+    unsigned int getCurrent(void);
 
     /*!
      * \brief set the StallGuard threshold in order to get sensible StallGuard readings.
-     * \param stallguard_threshold -64 … 63 the StallGuard threshold
-     * \param stallguard_filter_enabled 0 if the filter is disabled, -1 if it is enabled
+     * \param stall_guard_threshold -64 … 63 the StallGuard threshold
+     * \param stall_guard_filter_enabled 0 if the filter is disabled, -1 if it is enabled
      *
      * The StallGuard threshold is used to optimize the StallGuard reading to sensible values. It should be at 0 at
      * the maximum allowable load on the otor (but not before). = is a good starting point (and the default)
@@ -327,7 +335,7 @@ class TMC26XStepper {
      *
      * \sa getCurrentStallGuardReading() to read out the current value.
      */
-    void setStallGuardThreshold(char stallguard_threshold, char stallguard_filter_enabled);
+    void setStallGuardThreshold(char stall_guard_threshold, char stall_guard_filter_enabled);
 
     /*!
      * \brief reads out the StallGuard threshold
@@ -358,8 +366,8 @@ class TMC26XStepper {
      * (1/2 or 1/4th otf the configured current).
      * \sa COOL_STEP_HALF_CS_LIMIT, COOL_STEP_QUARTER_CS_LIMIT
      */
-    void setCoolStepConfiguration(uint16_t lower_SG_threshold, uint16_t SG_hysteresis, uint8_t current_decrement_step_size,
-                                  uint8_t current_increment_step_size, uint8_t lower_current_limit);
+    void setCoolStepConfiguration(unsigned int lower_SG_threshold, unsigned int SG_hysteresis, unsigned char current_decrement_step_size,
+                                  unsigned char current_increment_step_size, unsigned char lower_current_limit);
 
     /*!
      * \brief enables or disables the CoolStep smart energy operation feature. It must be configured before enabling it.
@@ -379,32 +387,32 @@ class TMC26XStepper {
      * \brief returns the lower StallGuard threshold for the CoolStep operation
      * \sa setCoolStepConfiguration()
      */
-    uint16_t getCoolStepLowerSgThreshold();
+    unsigned int getCoolStepLowerSgThreshold();
 
     /*!
      * \brief returns the upper StallGuard threshold for the CoolStep operation
      * \sa setCoolStepConfiguration()
      */
-    uint16_t getCoolStepUpperSgThreshold();
+    unsigned int getCoolStepUpperSgThreshold();
 
     /*!
      * \brief returns the number of StallGuard readings befor CoolStep adjusts the motor current.
      * \sa setCoolStepConfiguration()
      */
-    uint8_t getCoolStepNumberOfSGReadings();
+    unsigned char getCoolStepNumberOfSGReadings();
 
     /*!
      * \brief returns the increment steps for the current for the CoolStep operation
      * \sa setCoolStepConfiguration()
      */
-    uint8_t getCoolStepCurrentIncrementSize();
+    unsigned char getCoolStepCurrentIncrementSize();
 
     /*!
      * \brief returns the absolut minium current for the CoolStep operation
      * \sa setCoolStepConfiguration()
      * \sa COOL_STEP_HALF_CS_LIMIT, COOL_STEP_QUARTER_CS_LIMIT
      */
-    uint8_t getCoolStepLowerCurrentLimit();
+    unsigned char getCoolStepLowerCurrentLimit();
 
     /*!
      * \brief Get the current microstep position for phase A
@@ -412,7 +420,7 @@ class TMC26XStepper {
      *
      * Keep in mind that this routine reads and writes a value via SPI - so this may take a bit time.
      */
-    int16_t getMotorPosition(void);
+    int getMotorPosition(void);
 
     /*!
      * \brief Reads the current StallGuard value.
@@ -420,14 +428,14 @@ class TMC26XStepper {
      * Keep in mind that this routine reads and writes a value via SPI - so this may take a bit time.
      * \sa setStallGuardThreshold() for tuning the readout to sensible ranges.
      */
-    int16_t getCurrentStallGuardReading(void);
+    int getCurrentStallGuardReading(void);
 
     /*!
      * \brief Reads the current current setting value as fraction of the maximum current
      * Returns values between 0 and 31, representing 1/32 to 32/32 (=1)
      * \sa setCoolStepConfiguration()
      */
-    uint8_t getCurrentCSReading(void);
+    unsigned char getCurrentCSReading(void);
 
 
     /*!
@@ -443,7 +451,7 @@ class TMC26XStepper {
      * may not be the fastest.
      * \sa getCurrentCSReading(), getResistor(), isCurrentScalingHalfed(), getCurrent()
      */
-    uint16_t getCurrentCurrent(void);
+    unsigned int getCurrentCurrent(void);
 
     /*!
      * \brief checks if there is a StallGuard warning in the last status
@@ -544,52 +552,56 @@ class TMC26XStepper {
      * \brief Returns the current sense resistor value in milliohm.
      * The default value of ,15 Ohm will return 150.
      */
-    int16_t getResistor();
+    int getResistor();
 
     /*!
      * \brief Prints out all the information that can be found in the last status read out - it does not force a status readout.
      * The result is printed via Serial
      */
     void debugLastStatus(void);
-
     /*!
      * \brief library version
      * \return the version number as int.
      */
-    int16_t version(void);
+    int version(void);
 
   private:
-    uint16_t steps_left;      // The steps the motor has to do to complete the movement
-    int16_t direction;        // Direction of rotation
-    uint32_t step_delay;      // Delay between steps, in ms, based on speed
-    int16_t number_of_steps;  // Total number of steps this motor can take
-    uint16_t speed;           // Store the current speed in order to change the speed after changing microstepping
-    uint16_t resistor;        // Current sense resitor value in milliohm
+    unsigned int steps_left;    // The steps the motor has to do to complete the movement
+    int direction;              // Direction of rotation
+    unsigned long step_delay;   // Delay between steps, in ms, based on speed
+    int number_of_steps;        // Total number of steps this motor can take
+    unsigned int speed;         // Store the current speed in order to change the speed after changing microstepping
+    unsigned int resistor;      // Current sense resitor value in milliohm
 
-    uint32_t last_step_time,  // Timestamp (ms) of the last step
-             next_step_time;  // Timestamp (ms) of the next step
+    unsigned long last_step_time;   // Time stamp in ms of when the last step was taken
+    unsigned long next_step_time;   // Time stamp in ms of when the last step was taken
 
     // Driver control register copies to easily set & modify the registers
-    uint32_t driver_control_register_value,
-             chopper_config_register,
-             cool_step_register_value,
-             stallguard2_current_register_value,
-             driver_configuration_register_value,
-             driver_status_result; // The driver status result
+    unsigned long driver_control_register_value;
+    unsigned long chopper_config_register;
+    unsigned long cool_step_register_value;
+    unsigned long stall_guard2_current_register_value;
+    unsigned long driver_configuration_register_value;
+    // The driver status result
+    unsigned long driver_status_result;
 
     // Helper routione to get the top 10 bit of the readout
-    inline int16_t getReadoutValue();
+    inline int getReadoutValue();
 
     // The pins for the stepper driver
-    uint8_t cs_pin, step_pin, dir_pin;
+    unsigned char cs_pin;
+    unsigned char step_pin;
+    unsigned char dir_pin;
 
     // Status values
     boolean started; // If the stepper has been started yet
-    int16_t microsteps; // The current number of micro steps
+    int microsteps; // The current number of micro steps
     char constant_off_time; // We need to remember this value in order to enable and disable the motor
-    uint8_t cool_step_lower_threshold; //  we need to remember the threshold to enable and disable the CoolStep feature
+    unsigned char cool_step_lower_threshold; //  we need to remember the threshold to enable and disable the CoolStep feature
     boolean cool_step_enabled; // We need to remember this to configure the coolstep if it si enabled
 
     // SPI sender
-    inline void send262(uint32_t datagram);
+    inline void send262(unsigned long datagram);
 };
+
+#endif // _TMC26XSTEPPER_H_

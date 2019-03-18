@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -22,7 +22,7 @@
 
 #include "../../inc/MarlinConfig.h"
 
-#if HAS_HOTEND_OFFSET
+#if HOTENDS > 1
 
 #include "../gcode.h"
 #include "../../module/motion.h"
@@ -37,18 +37,29 @@
  *   T<tool>
  *   X<xoffset>
  *   Y<yoffset>
- *   Z<zoffset>
+ *   Z<zoffset> - Available with DUAL_X_CARRIAGE, SWITCHING_NOZZLE and PARKING_EXTRUDER
  */
 void GcodeSuite::M218() {
+  if (get_target_extruder_from_command() || target_extruder == 0) return;
 
-  const int8_t target_extruder = get_target_extruder_from_command();
-  if (target_extruder < 0) return;
+  bool report = true;
+  if (parser.seenval('X')) {
+    hotend_offset[X_AXIS][target_extruder] = parser.value_linear_units();
+    report = false;
+  }
+  if (parser.seenval('Y')) {
+    hotend_offset[Y_AXIS][target_extruder] = parser.value_linear_units();
+    report = false;
+  }
 
-  if (parser.seenval('X')) hotend_offset[X_AXIS][target_extruder] = parser.value_linear_units();
-  if (parser.seenval('Y')) hotend_offset[Y_AXIS][target_extruder] = parser.value_linear_units();
-  if (parser.seenval('Z')) hotend_offset[Z_AXIS][target_extruder] = parser.value_linear_units();
+  #if HAS_HOTEND_OFFSET_Z
+    if (parser.seenval('Z')) {
+      hotend_offset[Z_AXIS][target_extruder] = parser.value_linear_units();
+      report = false;
+    }
+  #endif
 
-  if (!parser.seen("XYZ")) {
+  if (report) {
     SERIAL_ECHO_START();
     SERIAL_ECHOPGM(MSG_HOTEND_OFFSET);
     HOTEND_LOOP() {
@@ -56,16 +67,18 @@ void GcodeSuite::M218() {
       SERIAL_ECHO(hotend_offset[X_AXIS][e]);
       SERIAL_CHAR(',');
       SERIAL_ECHO(hotend_offset[Y_AXIS][e]);
-      SERIAL_CHAR(',');
-      SERIAL_ECHO_F(hotend_offset[Z_AXIS][e], 3);
+      #if HAS_HOTEND_OFFSET_Z
+        SERIAL_CHAR(',');
+        SERIAL_ECHO(hotend_offset[Z_AXIS][e]);
+      #endif
     }
     SERIAL_EOL();
   }
 
   #if ENABLED(DELTA)
     if (target_extruder == active_extruder)
-      do_blocking_move_to_xy(current_position[X_AXIS], current_position[Y_AXIS], planner.settings.max_feedrate_mm_s[X_AXIS]);
+      do_blocking_move_to_xy(current_position[X_AXIS], current_position[Y_AXIS], planner.max_feedrate_mm_s[X_AXIS]);
   #endif
 }
 
-#endif // HAS_HOTEND_OFFSET
+#endif // HOTENDS > 1

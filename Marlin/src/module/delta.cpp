@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -37,17 +37,9 @@
 #include "../lcd/ultralcd.h"
 #include "../Marlin.h"
 
-#if HAS_BED_PROBE
-  #include "probe.h"
-#endif
-
 #if ENABLED(SENSORLESS_HOMING)
   #include "../feature/tmc_util.h"
-  #include "stepper_indirection.h"
 #endif
-
-#define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
-#include "../core/debug_out.h"
 
 // Initialized by settings.load()
 float delta_height,
@@ -81,7 +73,7 @@ void recalc_delta_settings() {
   delta_diagonal_rod_2_tower[B_AXIS] = sq(delta_diagonal_rod + drt[B_AXIS]);
   delta_diagonal_rod_2_tower[C_AXIS] = sq(delta_diagonal_rod + drt[C_AXIS]);
   update_software_endstops(Z_AXIS);
-  set_all_unhomed();
+  axis_homed = 0;
 }
 
 /**
@@ -98,7 +90,30 @@ void recalc_delta_settings() {
  *
  * - Disable the home_offset (M206) and/or position_shift (G92)
  *   features to remove up to 12 float additions.
+ *
+ * - Use a fast-inverse-sqrt function and add the reciprocal.
+ *   (see above)
  */
+
+#if ENABLED(DELTA_FAST_SQRT) && defined(__AVR__)
+  /**
+   * Fast inverse sqrt from Quake III Arena
+   * See: https://en.wikipedia.org/wiki/Fast_inverse_square_root
+   */
+  float Q_rsqrt(float number) {
+    long i;
+    float x2, y;
+    const float threehalfs = 1.5f;
+    x2 = number * 0.5f;
+    y  = number;
+    i  = * ( long * ) &y;                       // evil floating point bit level hacking
+    i  = 0x5F3759DF - ( i >> 1 );               // what the f***?
+    y  = * ( float * ) &i;
+    y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+    // y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+    return y;
+  }
+#endif
 
 #define DELTA_DEBUG(VAR) do { \
     SERIAL_ECHOPAIR("cartesian X:", VAR[X_AXIS]); \
@@ -109,8 +124,8 @@ void recalc_delta_settings() {
     SERIAL_ECHOLNPAIR(" C:", delta[C_AXIS]);      \
   }while(0)
 
-void inverse_kinematics(const float (&raw)[XYZ]) {
-  #if HAS_HOTEND_OFFSET
+void inverse_kinematics(const float raw[XYZ]) {
+  #if HOTENDS > 1
     // Delta hotend offsets must be applied in Cartesian space with no "spoofing"
     const float pos[XYZ] = {
       raw[X_AXIS] - hotend_offset[X_AXIS][active_extruder],
@@ -163,99 +178,109 @@ float delta_safe_distance_from_top() {
  *
  * The result is stored in the cartes[] array.
  */
-void forward_kinematics_DELTA(const float &z1, const float &z2, const float &z3) {
+void forward_kinematics_DELTA(float z1, float z2, float z3) {
   // Create a vector in old coordinates along x axis of new coordinate
-  const float p12[3] = { delta_tower[B_AXIS][X_AXIS] - delta_tower[A_AXIS][X_AXIS], delta_tower[B_AXIS][Y_AXIS] - delta_tower[A_AXIS][Y_AXIS], z2 - z1 },
+  float p12[3] = { delta_tower[B_AXIS][X_AXIS] - delta_tower[A_AXIS][X_AXIS], delta_tower[B_AXIS][Y_AXIS] - delta_tower[A_AXIS][Y_AXIS], z2 - z1 };
 
-  // Get the reciprocal of Magnitude of vector.
-  d2 = sq(p12[0]) + sq(p12[1]) + sq(p12[2]), inv_d = RSQRT(d2),
+  // Get the Magnitude of vector.
+  float d = SQRT( sq(p12[0]) + sq(p12[1]) + sq(p12[2]) );
 
-  // Create unit vector by multiplying by the inverse of the magnitude.
-  ex[3] = { p12[0] * inv_d, p12[1] * inv_d, p12[2] * inv_d },
+  // Create unit vector by dividing by magnitude.
+  float ex[3] = { p12[0] / d, p12[1] / d, p12[2] / d };
 
   // Get the vector from the origin of the new system to the third point.
-  p13[3] = { delta_tower[C_AXIS][X_AXIS] - delta_tower[A_AXIS][X_AXIS], delta_tower[C_AXIS][Y_AXIS] - delta_tower[A_AXIS][Y_AXIS], z3 - z1 },
+  float p13[3] = { delta_tower[C_AXIS][X_AXIS] - delta_tower[A_AXIS][X_AXIS], delta_tower[C_AXIS][Y_AXIS] - delta_tower[A_AXIS][Y_AXIS], z3 - z1 };
 
   // Use the dot product to find the component of this vector on the X axis.
-  i = ex[0] * p13[0] + ex[1] * p13[1] + ex[2] * p13[2],
+  float i = ex[0] * p13[0] + ex[1] * p13[1] + ex[2] * p13[2];
 
   // Create a vector along the x axis that represents the x component of p13.
-  iex[3] = { ex[0] * i, ex[1] * i, ex[2] * i };
+  float iex[3] = { ex[0] * i, ex[1] * i, ex[2] * i };
 
   // Subtract the X component from the original vector leaving only Y. We use the
   // variable that will be the unit vector after we scale it.
   float ey[3] = { p13[0] - iex[0], p13[1] - iex[1], p13[2] - iex[2] };
 
-  // The magnitude and the inverse of the magnitude of Y component
-  const float j2 = sq(ey[0]) + sq(ey[1]) + sq(ey[2]), inv_j = RSQRT(j2);
+  // The magnitude of Y component
+  float j = SQRT( sq(ey[0]) + sq(ey[1]) + sq(ey[2]) );
 
   // Convert to a unit vector
-  ey[0] *= inv_j; ey[1] *= inv_j; ey[2] *= inv_j;
+  ey[0] /= j; ey[1] /= j;  ey[2] /= j;
 
   // The cross product of the unit x and y is the unit z
   // float[] ez = vectorCrossProd(ex, ey);
-  const float ez[3] = {
+  float ez[3] = {
     ex[1] * ey[2] - ex[2] * ey[1],
     ex[2] * ey[0] - ex[0] * ey[2],
     ex[0] * ey[1] - ex[1] * ey[0]
-  },
+  };
 
   // We now have the d, i and j values defined in Wikipedia.
   // Plug them into the equations defined in Wikipedia for Xnew, Ynew and Znew
-  Xnew = (delta_diagonal_rod_2_tower[A_AXIS] - delta_diagonal_rod_2_tower[B_AXIS] + d2) * inv_d * 0.5,
-  Ynew = ((delta_diagonal_rod_2_tower[A_AXIS] - delta_diagonal_rod_2_tower[C_AXIS] + sq(i) + j2) * 0.5 - i * Xnew) * inv_j,
-  Znew = SQRT(delta_diagonal_rod_2_tower[A_AXIS] - HYPOT2(Xnew, Ynew));
+  float Xnew = (delta_diagonal_rod_2_tower[A_AXIS] - delta_diagonal_rod_2_tower[B_AXIS] + sq(d)) / (d * 2),
+        Ynew = ((delta_diagonal_rod_2_tower[A_AXIS] - delta_diagonal_rod_2_tower[C_AXIS] + HYPOT2(i, j)) / 2 - i * Xnew) / j,
+        Znew = SQRT(delta_diagonal_rod_2_tower[A_AXIS] - HYPOT2(Xnew, Ynew));
 
   // Start from the origin of the old coordinates and add vectors in the
   // old coords that represent the Xnew, Ynew and Znew to find the point
   // in the old system.
   cartes[X_AXIS] = delta_tower[A_AXIS][X_AXIS] + ex[0] * Xnew + ey[0] * Ynew - ez[0] * Znew;
   cartes[Y_AXIS] = delta_tower[A_AXIS][Y_AXIS] + ex[1] * Xnew + ey[1] * Ynew - ez[1] * Znew;
-  cartes[Z_AXIS] =                          z1 + ex[2] * Xnew + ey[2] * Ynew - ez[2] * Znew;
+  cartes[Z_AXIS] =             z1 + ex[2] * Xnew + ey[2] * Ynew - ez[2] * Znew;
 }
+
+#if ENABLED(SENSORLESS_HOMING)
+  inline void delta_sensorless_homing(const bool on=true) {
+    sensorless_homing_per_axis(A_AXIS, on);
+    sensorless_homing_per_axis(B_AXIS, on);
+    sensorless_homing_per_axis(C_AXIS, on);
+  }
+#endif
 
 /**
  * A delta can only safely home all axes at the same time
  * This is like quick_home_xy() but for 3 towers.
  */
-void home_delta() {
-  if (DEBUGGING(LEVELING)) DEBUG_POS(">>> home_delta", current_position);
+bool home_delta() {
+  #if ENABLED(DEBUG_LEVELING_FEATURE)
+    if (DEBUGGING(LEVELING)) DEBUG_POS(">>> home_delta", current_position);
+  #endif
   // Init the current position of all carriages to 0,0,0
   ZERO(current_position);
-  ZERO(destination);
   sync_plan_position();
 
   // Disable stealthChop if used. Enable diag1 pin on driver.
   #if ENABLED(SENSORLESS_HOMING)
-    sensorless_t stealth_states { false, false, false, false, false, false, false };
-    stealth_states.x = tmc_enable_stallguard(stepperX);
-    stealth_states.y = tmc_enable_stallguard(stepperY);
-    stealth_states.z = tmc_enable_stallguard(stepperZ);
+    delta_sensorless_homing();
   #endif
 
   // Move all carriages together linearly until an endstop is hit.
-  destination[Z_AXIS] = (delta_height
-    #if HAS_BED_PROBE
-      - zprobe_zoffset
-    #endif
-    + 10);
-  buffer_line_to_destination(homing_feedrate(X_AXIS));
+  current_position[X_AXIS] = current_position[Y_AXIS] = current_position[Z_AXIS] = (delta_height + 10);
+  feedrate_mm_s = homing_feedrate(X_AXIS);
+  line_to_current_position();
   planner.synchronize();
 
   // Re-enable stealthChop if used. Disable diag1 pin on driver.
   #if ENABLED(SENSORLESS_HOMING)
-    tmc_disable_stallguard(stepperX, stealth_states.x);
-    tmc_disable_stallguard(stepperY, stealth_states.y);
-    tmc_disable_stallguard(stepperZ, stealth_states.z);
+    delta_sensorless_homing(false);
   #endif
 
-  endstops.validate_homing_move();
+  // If an endstop was not hit, then damage can occur if homing is continued.
+  // This can occur if the delta height not set correctly.
+  if (!(endstops.trigger_state() & (_BV(X_MAX) | _BV(Y_MAX) | _BV(Z_MAX)))) {
+    LCD_MESSAGEPGM(MSG_ERR_HOMING_FAILED);
+    SERIAL_ERROR_START();
+    SERIAL_ERRORLNPGM(MSG_ERR_HOMING_FAILED);
+    return false;
+  }
+
+  endstops.hit_on_purpose(); // clear endstop hit flags
 
   // At least one carriage has reached the top.
   // Now re-home each carriage separately.
-  homeaxis(A_AXIS);
-  homeaxis(B_AXIS);
-  homeaxis(C_AXIS);
+  HOMEAXIS(A);
+  HOMEAXIS(B);
+  HOMEAXIS(C);
 
   // Set all carriages to their home positions
   // Do this here all at once for Delta, because
@@ -263,9 +288,13 @@ void home_delta() {
   // give the impression that they are the same.
   LOOP_XYZ(i) set_axis_is_at_home((AxisEnum)i);
 
-  sync_plan_position();
+  SYNC_PLAN_POSITION_KINEMATIC();
 
-  if (DEBUGGING(LEVELING)) DEBUG_POS("<<< home_delta", current_position);
+  #if ENABLED(DEBUG_LEVELING_FEATURE)
+    if (DEBUGGING(LEVELING)) DEBUG_POS("<<< home_delta", current_position);
+  #endif
+
+  return true;
 }
 
 #endif // DELTA

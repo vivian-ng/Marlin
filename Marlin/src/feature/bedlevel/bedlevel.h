@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,7 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
+
+#ifndef __BEDLEVEL_H__
+#define __BEDLEVEL_H__
 
 #include "../../inc/MarlinConfigPre.h"
 
@@ -48,7 +50,7 @@ void reset_bed_level();
   void set_z_fade_height(const float zfh, const bool do_report=true);
 #endif
 
-#if EITHER(AUTO_BED_LEVELING_BILINEAR, MESH_BED_LEVELING)
+#if ENABLED(AUTO_BED_LEVELING_BILINEAR) || ENABLED(MESH_BED_LEVELING)
 
   #include <stdint.h>
 
@@ -61,7 +63,7 @@ void reset_bed_level();
 
 #endif
 
-#if EITHER(MESH_BED_LEVELING, PROBE_MANUALLY)
+#if ENABLED(MESH_BED_LEVELING) || ENABLED(PROBE_MANUALLY)
   void _manual_goto_xy(const float &x, const float &y);
 #endif
 
@@ -80,6 +82,8 @@ void reset_bed_level();
   #include "mbl/mesh_bed_leveling.h"
 #elif ENABLED(AUTO_BED_LEVELING_UBL)
   #include "ubl/ubl.h"
-#elif ENABLED(AUTO_BED_LEVELING_BILINEAR)
+#elif HAS_ABL
   #include "abl/abl.h"
 #endif
+
+#endif // __BEDLEVEL_H__

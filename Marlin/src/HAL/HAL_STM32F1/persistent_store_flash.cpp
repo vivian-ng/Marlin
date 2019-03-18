@@ -1,7 +1,7 @@
 /**
  * Marlin 3D Printer Firmware
  *
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
  * Copyright (c) 2015-2016 Nico Tonnhofer wurstnase.reprap@gmail.com
  * Copyright (c) 2016 Victor Perez victor_pv@hotmail.com
@@ -32,38 +32,41 @@
 #include "../../inc/MarlinConfig.h"
 
 // This is for EEPROM emulation in flash
-#if BOTH(EEPROM_SETTINGS, FLASH_EEPROM_EMULATION)
+#if ENABLED(EEPROM_SETTINGS) && ENABLED(FLASH_EEPROM_EMULATION)
 
-#include "../shared/persistent_store_api.h"
+#include "../persistent_store_api.h"
 
 #include <flash_stm32.h>
 #include <EEPROM.h>
+
+namespace HAL {
+namespace PersistentStore {
 
 // Store settings in the last two pages
 // Flash pages must be erased before writing, so keep track.
 bool firstWrite = false;
 uint32_t pageBase = EEPROM_START_ADDRESS;
 
-bool PersistentStore::access_start() {
+bool access_start() {
   firstWrite = true;
   return true;
 }
 
-bool PersistentStore::access_finish() {
+bool access_finish(){
   FLASH_Lock();
   firstWrite = false;
   return true;
 }
 
-bool PersistentStore::write_data(int &pos, const uint8_t *value, const size_t size, uint16_t *crc) {
+bool write_data(int &pos, const uint8_t *value, uint16_t size, uint16_t *crc) {
   FLASH_Status status;
 
   if (firstWrite) {
     FLASH_Unlock();
     status = FLASH_ErasePage(EEPROM_PAGE0_BASE);
-    if (status != FLASH_COMPLETE) return true;
+    if (status != FLASH_COMPLETE) return false;
     status = FLASH_ErasePage(EEPROM_PAGE1_BASE);
-    if (status != FLASH_COMPLETE) return true;
+    if (status != FLASH_COMPLETE) return false;
     firstWrite = false;
   }
 
@@ -73,7 +76,7 @@ bool PersistentStore::write_data(int &pos, const uint8_t *value, const size_t si
   uint16_t* wordBuffer = (uint16_t *)value;
   while (wordsToWrite) {
     status = FLASH_ProgramHalfWord(pageBase + pos + (i * 2), wordBuffer[i]);
-    if (status != FLASH_COMPLETE) return true;
+    if (status != FLASH_COMPLETE) return false;
     wordsToWrite--;
     i++;
   }
@@ -82,15 +85,15 @@ bool PersistentStore::write_data(int &pos, const uint8_t *value, const size_t si
   if (size & 1) {
     uint16_t temp = value[size - 1];
     status = FLASH_ProgramHalfWord(pageBase + pos + i, temp);
-    if (status != FLASH_COMPLETE) return true;
+    if (status != FLASH_COMPLETE) return false;
   }
 
   crc16(crc, value, size);
   pos += ((size + 1) & ~1);
-  return false;
+  return true;
 }
 
-bool PersistentStore::read_data(int &pos, uint8_t* value, const size_t size, uint16_t *crc, const bool writing/*=true*/) {
+void read_data(int &pos, uint8_t* value, uint16_t size, uint16_t *crc, const bool writing/*=true*/) {
   for (uint16_t i = 0; i < size; i++) {
     byte* accessPoint = (byte*)(pageBase + pos + i);
     uint8_t c = *accessPoint;
@@ -98,10 +101,10 @@ bool PersistentStore::read_data(int &pos, uint8_t* value, const size_t size, uin
     crc16(crc, &c, 1);
   }
   pos += ((size + 1) & ~1);
-  return false;
 }
 
-size_t PersistentStore::capacity() { return E2END + 1; }
+} // PersistentStore
+} // HAL
 
 #endif // EEPROM_SETTINGS && EEPROM FLASH
 #endif // __STM32F1__

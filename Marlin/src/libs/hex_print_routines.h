@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,7 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
+
+#ifndef HEX_PRINT_ROUTINES_H
+#define HEX_PRINT_ROUTINES_H
 
 #include <stdint.h>
 
@@ -38,10 +40,11 @@ void print_hex_nybble(const uint8_t n);
 void print_hex_byte(const uint8_t b);
 void print_hex_word(const uint16_t w);
 void print_hex_address(const void * const w);
-void print_hex_long(const uint32_t w, const char delimiter);
 
 #ifdef CPU_32_BIT
   typedef uint32_t ptr_int_t;
 #else
   typedef uint16_t ptr_int_t;
 #endif
+
+#endif // HEX_PRINT_ROUTINES_H

@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -23,7 +23,7 @@
 /**
  * Open Motion controller with enable based extruders (Final!)
  *
- *                        ATmega644
+ *                        ATMega644
  *
  *                        +---\/---+
  *            (D 0) PB0  1|        |40  PA0 (AI 0 / D31)
@@ -77,10 +77,10 @@
  */
 
 #if !defined(__AVR_ATmega644P__) && !defined(__AVR_ATmega644__)
-  #error "Oops! Select 'Sanguino' in 'Tools > Board' and 'ATmega644' or 'ATmega644P' in 'Tools > Processor.'"
+  #error "Oops!  Make sure you have 'Sanguino' selected from the 'Tools -> Boards' menu. (Final OMCA board)"
 #endif
 
-#define BOARD_NAME "Final OMCA"
+#define BOARD_NAME         "Final OMCA"
 
 //
 // Limit Switches

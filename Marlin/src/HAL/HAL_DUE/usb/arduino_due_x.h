@@ -40,11 +40,14 @@
  * \asf_license_stop
  *
  */
-#pragma once
-
-/**
+/*
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
+
+#ifndef ARDUINO_DUE_X_H_INCLUDED
+#define ARDUINO_DUE_X_H_INCLUDED
+
+/* ------------------------------------------------------------------------ */
 
 /**
  *  \page arduino_due_x_opfreq "Arduino Due/X - Operating frequencies"
@@ -95,3 +98,6 @@
 /*! Active level of the USB_VBOF output pin. */
 #define USB_VBOF_ACTIVE_LEVEL       LOW
 /* ------------------------------------------------------------------------ */
+
+
+#endif /* ARDUINO_DUE_X_H_INCLUDED */

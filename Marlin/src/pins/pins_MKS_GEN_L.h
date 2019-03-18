@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -35,18 +35,5 @@
 //
 // Power outputs EFBF or EFBE
 #define MOSFET_D_PIN 7
-
-//
-// CS Pins wired to avoid conflict with the LCD
-// See https://www.thingiverse.com/asset:66604
-//
-
-#ifndef X_CS_PIN
-  #define X_CS_PIN 59
-#endif
-
-#ifndef Y_CS_PIN
-  #define Y_CS_PIN 63
-#endif
 
 #include "pins_RAMPS.h"

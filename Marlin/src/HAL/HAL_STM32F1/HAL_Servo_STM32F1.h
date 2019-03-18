@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -20,34 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
-// Pin number of unattached pins
-#define NOT_ATTACHED                    (-1)
-#define INVALID_SERVO                   255
+#ifndef HAL_SERVO_STM32F1_H
+#define HAL_SERVO_STM32F1_H
 
-#ifndef MAX_SERVOS
-  #define MAX_SERVOS 3
-#endif
+// Path needed, otherwise HAL version is used
+#include <../../libraries/Servo/src/Servo.h>
 
-#define SERVO_DEFAULT_MIN_PW            544
-#define SERVO_DEFAULT_MAX_PW            2400
-#define SERVO_DEFAULT_MIN_ANGLE         0
-#define SERVO_DEFAULT_MAX_ANGLE         180
-
-#define HAL_SERVO_LIB libServo
-
-class libServo {
-  public:
-    libServo();
-    bool attach(const int32_t pin, const int32_t minAngle=SERVO_DEFAULT_MIN_ANGLE, const int32_t maxAngle=SERVO_DEFAULT_MAX_ANGLE);
-    bool attached() const { return this->pin != NOT_ATTACHED; }
-    bool detach();
-    void move(const int32_t value);
-    int32_t read() const;
-  private:
+// Inherit and expand on the official library
+class libServo : public Servo {
+public:
+    int8_t attach(const int pin);
+    int8_t attach(const int pin, const int min, const int max);
+    void move(const int value);
+private:
+    uint16_t min_ticks;
+    uint16_t max_ticks;
     uint8_t servoIndex;               // index into the channel data for this servo
-    int32_t pin = NOT_ATTACHED;
-    int32_t minAngle;
-    int32_t maxAngle;
 };
+
+#endif // HAL_SERVO_STM32F1_H

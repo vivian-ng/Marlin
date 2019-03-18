@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#pragma once
+
+#ifndef _HAL_AVR_H_
+#define _HAL_AVR_H_
 
 // --------------------------------------------------------------------------
 // Includes
@@ -32,7 +34,7 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
 
-#include "../shared/HAL_SPI.h"
+#include "../HAL_SPI.h"
 #include "fastio_AVR.h"
 #include "watchdog_AVR.h"
 #include "math_AVR.h"
@@ -50,8 +52,8 @@
 //#define analogInputToDigitalPin(IO) IO
 
 #ifndef CRITICAL_SECTION_START
-  #define CRITICAL_SECTION_START  unsigned char _sreg = SREG; cli()
-  #define CRITICAL_SECTION_END    SREG = _sreg
+  #define CRITICAL_SECTION_START  unsigned char _sreg = SREG; cli();
+  #define CRITICAL_SECTION_END    SREG = _sreg;
 #endif
 #define ISRS_ENABLED() TEST(SREG, SREG_I)
 #define ENABLE_ISRS()  sei()
@@ -77,32 +79,16 @@ typedef int8_t pin_t;
 
 //extern uint8_t MCUSR;
 
-// Serial ports
+#define NUM_SERIAL 1
+
 #ifdef USBCON
   #if ENABLED(BLUETOOTH)
     #define MYSERIAL0 bluetoothSerial
   #else
     #define MYSERIAL0 Serial
   #endif
-  #define NUM_SERIAL 1
 #else
-  #if !WITHIN(SERIAL_PORT, -1, 3)
-    #error "SERIAL_PORT must be from -1 to 3"
-  #endif
-
-  #define MYSERIAL0 customizedSerial1
-
-  #ifdef SERIAL_PORT_2
-    #if !WITHIN(SERIAL_PORT_2, -1, 3)
-      #error "SERIAL_PORT_2 must be from -1 to 3"
-    #elif SERIAL_PORT_2 == SERIAL_PORT
-      #error "SERIAL_PORT_2 must be different than SERIAL_PORT"
-    #endif
-    #define NUM_SERIAL 2
-    #define MYSERIAL1 customizedSerial2
-  #else
-    #define NUM_SERIAL 1
-  #endif
+  #define MYSERIAL0 customizedSerial
 #endif
 
 // --------------------------------------------------------------------------
@@ -182,8 +168,10 @@ FORCE_INLINE void HAL_timer_start(const uint8_t timer_num, const uint32_t freque
 #define TIMER_OCR_0             OCR0A
 #define TIMER_COUNTER_0         TCNT0
 
-#define _CAT(a,V...) a##V
+#define _CAT(a, ...) a ## __VA_ARGS__
 #define HAL_timer_set_compare(timer, compare) (_CAT(TIMER_OCR_, timer) = compare)
+#define HAL_timer_restrain(timer, interval_ticks) NOLESS(_CAT(TIMER_OCR_, timer), _CAT(TIMER_COUNTER_, timer) + interval_ticks)
+
 #define HAL_timer_get_compare(timer) _CAT(TIMER_OCR_, timer)
 #define HAL_timer_get_count(timer) _CAT(TIMER_COUNTER_, timer)
 
@@ -197,7 +185,7 @@ FORCE_INLINE void HAL_timer_start(const uint8_t timer_num, const uint32_t freque
 #define HAL_timer_isr_epilogue(TIMER_NUM)
 
 /* 18 cycles maximum latency */
-#define HAL_STEP_TIMER_ISR() \
+#define HAL_STEP_TIMER_ISR \
 extern "C" void TIMER1_COMPA_vect (void) __attribute__ ((signal, naked, used, externally_visible)); \
 extern "C" void TIMER1_COMPA_vect_bottom (void) asm ("TIMER1_COMPA_vect_bottom") __attribute__ ((used, externally_visible, noinline)); \
 void TIMER1_COMPA_vect (void) { \
@@ -270,7 +258,7 @@ void TIMER1_COMPA_vect (void) { \
 void TIMER1_COMPA_vect_bottom(void)
 
 /* 14 cycles maximum latency */
-#define HAL_TEMP_TIMER_ISR() \
+#define HAL_TEMP_TIMER_ISR \
 extern "C" void TIMER0_COMPB_vect (void) __attribute__ ((signal, naked, used, externally_visible)); \
 extern "C" void TIMER0_COMPB_vect_bottom(void)  asm ("TIMER0_COMPB_vect_bottom") __attribute__ ((used, externally_visible, noinline)); \
 void TIMER0_COMPB_vect (void) { \
@@ -357,8 +345,7 @@ inline void HAL_adc_init(void) {
   #define HAL_START_ADC(pin) ADCSRB = 0; SET_ADMUX_ADCSRA(pin)
 #endif
 
-#define HAL_READ_ADC()  ADC
-#define HAL_ADC_READY() !TEST(ADCSRA, ADSC)
+#define HAL_READ_ADC ADC
 
 #define GET_PIN_MAP_PIN(index) index
 #define GET_PIN_MAP_INDEX(pin) pin
@@ -366,9 +353,4 @@ inline void HAL_adc_init(void) {
 
 #define HAL_SENSITIVE_PINS 0, 1
 
-#ifdef __AVR_AT90USB1286__
-  #define JTAG_DISABLE() do{ MCUCR = 0x80; MCUCR = 0x80; }while(0)
-#endif
-
-// AVR compatibility
-#define strtof strtod
+#endif // _HAL_AVR_H_

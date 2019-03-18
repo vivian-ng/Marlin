@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -24,77 +24,18 @@
  * Arduino Mega with RAMPS v1.4 for Anycubic
  */
 
-#define BOARD_NAME "Anycubic RAMPS 1.4"
-
-// Labeled pins
-#define TRIGORILLA_HEATER_BED_PIN  8
-#define TRIGORILLA_HEATER_0_PIN   10
-#define TRIGORILLA_HEATER_1_PIN   45   // Anycubic Kossel: Unused
-
-#define TRIGORILLA_FAN0_PIN        9   // Anycubic Kossel: Usually the part cooling fan
-#define TRIGORILLA_FAN1_PIN        7   // Anycubic Kossel: Unused
-#define TRIGORILLA_FAN2_PIN       44   // Anycubic Kossel: Hotend fan
-
-// Remap MOSFET pins to common usages:
-
-#define RAMPS_D10_PIN    TRIGORILLA_HEATER_0_PIN // HEATER_0_PIN is always RAMPS_D10_PIN in pins_RAMPS.h
-
-#if HOTENDS > 1   // EEF and EEB
-  #define RAMPS_D9_PIN   TRIGORILLA_HEATER_1_PIN
-  #if !TEMP_SENSOR_BED
-    // EEF
-    #define RAMPS_D8_PIN TRIGORILLA_FAN0_PIN
-  #else
-    // EEB
-    #define RAMPS_D8_PIN TRIGORILLA_HEATER_BED_PIN
-    #define FAN_PIN      TRIGORILLA_FAN0_PIN    // Override pin 4 in pins_RAMPS.h
-  #endif
-#elif TEMP_SENSOR_BED
-  // EFB (Anycubic Kossel default)
-  #define RAMPS_D9_PIN   TRIGORILLA_FAN0_PIN
-  #define RAMPS_D8_PIN   TRIGORILLA_HEATER_BED_PIN
-#else
-  // EFF
-  #define RAMPS_D9_PIN   TRIGORILLA_FAN1_PIN
-  #define RAMPS_D8_PIN   TRIGORILLA_FAN0_PIN
+#ifndef BOARD_NAME
+  #define BOARD_NAME "Anycubic RAMPS 1.4"
 #endif
 
-#if HOTENDS > 1 || TEMP_SENSOR_BED      // EEF, EEB, EFB
-  #define FAN1_PIN       TRIGORILLA_FAN1_PIN
-#endif
-#define FAN2_PIN         TRIGORILLA_FAN2_PIN
-#define ORIG_E0_AUTO_FAN_PIN TRIGORILLA_FAN2_PIN  // Used in Anycubic Kossel example config
+#define IS_RAMPS_EFB
 
-#include "pins_RAMPS.h"
+#define FAN2_PIN             44
+#define ORIG_E0_AUTO_FAN_PIN 44
 
-//
-// AnyCubic made the following changes to 1.1.0-RC8
-// If these are appropriate for your LCD let us know.
-//
-#if 0 && ENABLED(ULTRA_LCD)
+#include "pins_RAMPS_13.h"
 
-  // LCD Display output pins
-  #if BOTH(NEWPANEL, PANEL_ONE)
-    #undef LCD_PINS_D6
-    #define LCD_PINS_D6    57
-  #endif
-
-  // LCD Display input pins
-  #if ENABLED(NEWPANEL)
-    #if ANY(VIKI2, miniVIKI)
-      #undef DOGLCD_A0
-      #define DOGLCD_A0    23
-    #elif ENABLED(ELB_FULL_GRAPHIC_CONTROLLER)
-      #undef BEEPER_PIN
-      #define BEEPER_PIN   33
-      #undef LCD_BACKLIGHT_PIN
-      #define LCD_BACKLIGHT_PIN 67
-    #endif
-  #elif ENABLED(MINIPANEL)
-    #undef BEEPER_PIN
-    #define BEEPER_PIN     33
-    #undef DOGLCD_A0
-    #define DOGLCD_A0      42
-  #endif
-
-#endif // ULTRA_LCD
+#undef E1_STEP_PIN
+#undef E1_DIR_PIN
+#undef E1_ENABLE_PIN
+#undef E1_CS_PIN

@@ -1,6 +1,7 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2017 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -30,10 +31,12 @@
  */
 
 #ifndef TARGET_LPC1768
-  #error "Oops! Make sure you have the LPC1768 environment selected in your IDE."
+  #error "Oops!  Make sure you have the LPC1768 environment selected in your IDE."
 #endif
 
-#define BOARD_NAME "BIQU BQ111-A4"
+#ifndef BOARD_NAME
+  #define BOARD_NAME "BIQU BQ111-A4"
+#endif
 
 //
 // Limit Switches
@@ -112,7 +115,7 @@
   #define LCD_PINS_ENABLE     P0_18   // (MOSI) EXP1-3
   #define LCD_PINS_D4         P0_15   // (SCK)  EXP1-5
 
-  #if ENABLED(REPRAP_DISCOUNT_SMART_CONTROLLER) && DISABLED(DOGLCD)
+  #if ENABLED(REPRAP_DISCOUNT_SMART_CONTROLLER) && !ENABLED(DOGLCD)
     #error "REPRAP_DISCOUNT_SMART_CONTROLLER is not supported by the BIQU BQ111-A4"
   #endif
 

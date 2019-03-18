@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -27,10 +27,10 @@
  */
 
 #ifndef __AVR_ATmega2560__
-  #error "Oops! Select 'Arduino/Genuino Mega or Mega 2560' in 'Tools > Board.'"
+  #error "Oops!  Make sure you have 'Arduino Mega' selected from the 'Tools -> Boards' menu."
 #endif
 
-#define BOARD_NAME "Cheaptronic v2.0"
+#define BOARD_NAME         "Cheaptronic v2.0"
 
 //
 // Limit Switches
@@ -109,7 +109,7 @@
 #endif
 
 //
-// LCD / Controller
+// LCD
 //
 #define LCD_PINS_RS        19
 #define LCD_PINS_ENABLE    42
@@ -119,18 +119,12 @@
 #define LCD_PINS_D7        40
 
 //
-// Beeper, SD Card, Encoder
+// SD CARD, ROTARY ENCODER, BEEPER
 //
+#define SDPOWER            -1
+#define SDSS               53
+#define SD_DETECT_PIN      49
 #define BEEPER_PIN         44
-
-#if ENABLED(SDSUPPORT)
-  #define SDPOWER          -1
-  #define SDSS             53
-  #define SD_DETECT_PIN    49
-#endif
-
-#if ENABLED(NEWPANEL)
-  #define BTN_EN1          11
-  #define BTN_EN2          12
-  #define BTN_ENC          43
-#endif
+#define BTN_EN1            11
+#define BTN_EN2            12
+#define BTN_ENC            43

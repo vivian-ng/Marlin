@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (C) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
@@ -19,7 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
 /**
  * SdFatConfig.h
@@ -29,7 +28,11 @@
  * This file is part of the Arduino Sd2Card Library
  */
 
+#ifndef _SDFATCONFIG_H_
+#define _SDFATCONFIG_H_
+
 #include "../inc/MarlinConfig.h"
+
 
 /**
  * To use multiple SD cards set USE_MULTIPLE_CARDS nonzero.
@@ -110,3 +113,5 @@
 
 // Total bytes needed to store a single long filename
 #define LONG_FILENAME_LENGTH (FILENAME_LENGTH * MAX_VFAT_ENTRIES + 1)
+
+#endif // _SDFATCONFIG_H_
