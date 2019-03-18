@@ -19,7 +19,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#pragma once
+
+#ifndef WATCHDOG_ESP32_H
+#define WATCHDOG_ESP32_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+esp_err_t esp_task_wdt_reset();
+#ifdef __cplusplus
+}
+#endif
 
 #define WDT_TIMEOUT   4000000 // 4 second timeout
 
