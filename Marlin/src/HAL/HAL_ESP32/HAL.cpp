@@ -83,6 +83,10 @@ void HAL_init_board() {
   #if ENABLED(WIFISUPPORT)
     wifi_config.begin();
   #endif
+
+  #if ENABLED(I2S_STEPPER_STREAM)
+    i2s_init();
+  #endif
 }
 
 void HAL_idletask(void) {
