@@ -37,6 +37,7 @@
 #include "timers.h"
 
 #include "serial2socket.h"
+#include "FlushableHardwareSerial.h"
 
 // ------------------------
 // Defines

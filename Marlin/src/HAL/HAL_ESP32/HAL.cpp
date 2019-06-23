@@ -71,15 +71,13 @@ volatile int numPWMUsed = 0,
 // Public functions
 // ------------------------
 
-void HAL_init() {
-  i2s_init();
+void HAL_init(void) {
+#if ENABLED(I2S_STEPPER_STREAM)
+    i2s_init();
+#endif
 }
 
-void HAL_init_board() {
-  #if EITHER(EEPROM_SETTINGS, WEBSUPPORT)
-    spiffs_init();
-  #endif
-
+void HAL_init_board(void) {
   #if ENABLED(WIFISUPPORT)
     wifi_config.begin();
   #endif
