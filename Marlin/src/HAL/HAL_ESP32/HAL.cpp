@@ -77,10 +77,6 @@ void HAL_init_board(void) {
   #if ENABLED(WIFISUPPORT)
     wifi_config.begin();
   #endif
-
-  #if ENABLED(WIFISUPPORT)
-    wifi_config.begin();
-  #endif
 }
 
 void HAL_idletask(void) {
