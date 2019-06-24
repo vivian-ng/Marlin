@@ -41,7 +41,7 @@
 //
 // Enable I2S stepper stream
 //
-#ifdef I2S_STEPPER_STREAM
+#ifndef I2S_STEPPER_STREAM
   #define I2S_STEPPER_STREAM
 #endif
 
@@ -109,6 +109,7 @@
   #define LCD_PINS_D5         141
   #define LCD_PINS_D6         142
   #define LCD_PINS_D7         143
+  #define BEEPER_PIN          37
 
 #elif ENABLED(CR10_STOCKDISPLAY)
   #define LCD_PINS_RS         17
@@ -121,7 +122,6 @@
 // LCD Display input pins
 //
 #if ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER)
-  #define BEEPER_PIN          37
   #define BTN_EN1             12
   #define BTN_EN2             14
   #define BTN_ENC             22
@@ -132,4 +132,3 @@
   #define BTN_ENC             22
 
 #endif
-

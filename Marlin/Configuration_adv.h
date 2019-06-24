@@ -985,7 +985,7 @@
   // as SD_DETECT_PIN in your board's pins definitions.
   // This setting should be disabled unless you are using a push button, pulling the pin to ground.
   // Note: This is always disabled for ULTIPANEL (except ELB_FULL_GRAPHIC_CONTROLLER).
-  #define SD_DETECT_INVERTED
+  //#define SD_DETECT_INVERTED
 
   #define SD_FINISHED_STEPPERRELEASE true          // Disable steppers when SD Print is finished
   #define SD_FINISHED_RELEASECOMMAND "M84 X Y Z E" // You might want to keep the Z enabled so your bed stays in place.
@@ -1062,7 +1062,7 @@
   #endif
 
   // This allows hosts to request long names for files and folders with M33
-  //#define LONG_FILENAME_HOST_SUPPORT
+  #define LONG_FILENAME_HOST_SUPPORT
 
   // Enable this option to scroll long filenames in the SD card menu
   //#define SCROLL_LONG_FILENAMES
@@ -1366,7 +1366,7 @@
  *
  * Warning: Does not respect endstops!
  */
-//#define BABYSTEPPING
+#define BABYSTEPPING
 #if ENABLED(BABYSTEPPING)
   //#define BABYSTEP_WITHOUT_HOMING
   //#define BABYSTEP_XY                     // Also enable X/Y Babystepping. Not supported on DELTA!
@@ -1412,10 +1412,10 @@
  * See http://marlinfw.org/docs/features/lin_advance.html for full instructions.
  * Mention @Sebastianv650 on GitHub to alert the author of any issues.
  */
-//#define LIN_ADVANCE
+#define LIN_ADVANCE
 #if ENABLED(LIN_ADVANCE)
   //#define EXTRA_LIN_ADVANCE_K // Enable for second linear advance constants
-  #define LIN_ADVANCE_K 0.22    // Unit: mm compression per 1mm/s extruder speed
+  #define LIN_ADVANCE_K 0    // Unit: mm compression per 1mm/s extruder speed
   //#define LA_DEBUG            // If enabled, this will generate debug information output over USB.
 #endif
 
@@ -1591,13 +1591,13 @@
 // For debug-echo: 128 bytes for the optimal speed.
 // Other output doesn't need to be that speedy.
 // :[0, 2, 4, 8, 16, 32, 64, 128, 256]
-#define TX_BUFFER_SIZE 0
+#define TX_BUFFER_SIZE 128
 
 // Host Receive Buffer Size
 // Without XON/XOFF flow control (see SERIAL_XON_XOFF below) 32 bytes should be enough.
 // To use flow control, set this buffer size to at least 1024 bytes.
 // :[0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
-//#define RX_BUFFER_SIZE 1024
+#define RX_BUFFER_SIZE 1024
 
 #if RX_BUFFER_SIZE >= 1024
   // Enable to have the controller send XON/XOFF control characters to
@@ -2785,7 +2785,7 @@
 #if ENABLED(WIFISUPPORT)
   #define WIFI_SSID "Wifi SSID"
   #define WIFI_PWD  "Wifi Password"
-  #define ENABLE_AUTHENTICATION
+  //#define ENABLE_AUTHENTICATION
   //#define WEBSUPPORT        // Start a webserver with auto-discovery
   //#define OTASUPPORT        // Support over-the-air firmware updates
 #endif
