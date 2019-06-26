@@ -102,31 +102,33 @@
 //
 // LCD Display output pins
 //
-#if ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER)
-  #define LCD_PINS_RS         17
-  #define LCD_PINS_ENABLE     21
-  #define LCD_PINS_D4         140
-  #define LCD_PINS_D5         141
-  #define LCD_PINS_D6         142
-  #define LCD_PINS_D7         143
-  #define BEEPER_PIN          37
-
-#elif ENABLED(CR10_STOCKDISPLAY)
+#if ENABLED(CR10_STOCKDISPLAY)
   #define LCD_PINS_RS         17
   #define LCD_PINS_ENABLE     21
   #define LCD_PINS_D4         32
-  #define BEEPER_PIN          37
+  #define BEEPER_PIN          16
+
+#elif ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER)
+  #define LCD_PINS_RS         17
+  #define LCD_PINS_ENABLE     21
+  #define LCD_PINS_D4         32
+  #define LCD_PINS_D5         141
+  #define LCD_PINS_D6         142
+  #define LCD_PINS_D7         143
+  #define BEEPER_PIN          16
+
 #endif
 
 //
 // LCD Display input pins
 //
-#if ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER)
+#if ENABLED(CR10_STOCKDISPLAY)
   #define BTN_EN1             12
   #define BTN_EN2             14
   #define BTN_ENC             22
+  #define REVERSE_MENU_DIRECTION
 
-#elif ENABLED(CR10_STOCKDISPLAY)
+#elif ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER)
   #define BTN_EN1             12
   #define BTN_EN2             14
   #define BTN_ENC             22
