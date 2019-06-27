@@ -112,9 +112,9 @@
   #define LCD_PINS_RS         17
   #define LCD_PINS_ENABLE     21
   #define LCD_PINS_D4         32
-  //#define LCD_PINS_D5         141
-  //#define LCD_PINS_D6         142
-  //#define LCD_PINS_D7         143
+  #define LCD_PINS_D5         141
+  #define LCD_PINS_D6         142
+  #define LCD_PINS_D7         143
   #define BEEPER_PIN          16
 
 #endif

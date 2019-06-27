@@ -31,6 +31,16 @@
 #endif
 
 //
+// Disable I2S stepper stream
+//
+#ifdef I2S_STEPPER_STREAM
+  #undef I2S_STEPPER_STREAM
+#endif
+#define I2S_WS              -1
+#define I2S_BCK             -1
+#define I2S_DATA            -1
+
+//
 // Limit Switches
 //
 #define X_MIN_PIN          34
@@ -60,14 +70,6 @@
 #define E0_ENABLE_PIN      X_ENABLE_PIN
 //#define E0_CS_PIN          21
 
-
-//
-// Disable I2S stepper stream
-//
-#ifdef I2S_STEPPER_STREAM
-  #undef I2S_STEPPER_STREAM
-#endif
-
 //
 // Temperature Sensors
 //
@@ -89,4 +91,3 @@
 #define SCK_PIN            18
 #define SS_PIN              5
 #define SDSS                5
-
