@@ -48,6 +48,11 @@
 #define I2S_WS              25
 #define I2S_BCK             26
 #define I2S_DATA            27
+
+#ifdef LIN_ADVANCE
+  #undef LIN_ADVANCE  // Currently, I2S stream does not work with linear advance
+#endif
+
 //
 // Steppers
 //
