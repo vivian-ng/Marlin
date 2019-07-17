@@ -70,14 +70,6 @@
 #define E0_ENABLE_PIN      X_ENABLE_PIN
 //#define E0_CS_PIN          21
 
-
-//
-// Disable I2S stepper stream
-//
-#ifdef I2S_STEPPER_STREAM
-  #undef I2S_STEPPER_STREAM
-#endif
-
 //
 // Temperature Sensors
 //
