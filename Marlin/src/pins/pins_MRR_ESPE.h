@@ -20,12 +20,18 @@
  *
  */
 
+#pragma once
+
 /**
  * MRR ESPE pin assignments
  * MRR ESPE is a 3D printer control board based on the ESP32 microcontroller.
- * Supports 4 stepper drivers (using I2S stepper stream), heated bed,
+ * Supports 5 stepper drivers (using I2S stepper stream), heated bed,
  * single hotend, and LCD controller.
  */
+
+#ifndef ARDUINO_ARCH_ESP32
+  "Oops! Select an ESP32 board in 'Tools > Board.'"
+#endif
 
 #ifndef BOARD_NAME
   #define BOARD_NAME "MRR ESPE"
@@ -75,6 +81,11 @@
 #define E0_DIR_PIN         139
 #define E0_ENABLE_PIN      137
 //#define E0_CS_PIN          21
+
+#define E1_STEP_PIN        141
+#define E2_DIR_PIN         142
+#define E3_ENABLE_PIN      140
+//#define E0_CS_PIN          27
 
 
 //

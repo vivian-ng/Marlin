@@ -20,11 +20,17 @@
  *
  */
 
+#pragma once
+
 /**
  * MRR ESPA pin assignments
  * MRR ESPA is a 3D printer control board based on the ESP32 microcontroller.
  * Supports 4 stepper drivers, heated bed, single hotend.
  */
+
+#ifndef ARDUINO_ARCH_ESP32
+  "Oops! Select an ESP32 board in 'Tools > Board.'"
+#endif
 
 #ifndef BOARD_NAME
   #define BOARD_NAME "MRR ESPA"
