@@ -51,8 +51,8 @@
   #define I2S_STEPPER_STREAM
 #endif
 
-#define I2S_WS              25
-#define I2S_BCK             26
+#define I2S_WS              26
+#define I2S_BCK             25
 #define I2S_DATA            27
 
 #ifdef LIN_ADVANCE
@@ -93,13 +93,19 @@
 //
 #define TEMP_0_PIN         36   // Analog Input
 #define TEMP_BED_PIN       39   // Analog Input
+#define TEMP_1_PIN         34
 
 //
 // Heaters / Fans
 //
-#define HEATER_0_PIN        2
-#define FAN_PIN            13
-#define HEATER_BED_PIN      4
+#define HEATER_0_PIN       145 // 2
+#define FAN_PIN            146 // 27
+#define HEATER_BED_PIN     144 // 4
+
+#define CONTROLLER_FAN_PIN 147
+#define E0_AUTO_FAN_PIN 148
+//#define E1_AUTO_FAN_PIN 149
+#define FAN1_PIN 149
 
 //
 // MicroSD card
@@ -119,19 +125,19 @@
 // LCD Display output pins
 //
 #if ENABLED(CR10_STOCKDISPLAY)
-  #define LCD_PINS_RS         17
-  #define LCD_PINS_ENABLE     21
-  #define LCD_PINS_D4         32
-  #define BEEPER_PIN          16
+  #define LCD_PINS_RS         13 // 26
+  #define LCD_PINS_ENABLE     17 // 25
+  #define LCD_PINS_D4         16 // 15
+  #define BEEPER_PIN          152
 
 #elif ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER)
-  #define LCD_PINS_RS         17
-  #define LCD_PINS_ENABLE     21
-  #define LCD_PINS_D4         32
+  #define LCD_PINS_RS         13 // 26
+  #define LCD_PINS_ENABLE     17 //25
+  #define LCD_PINS_D4         16 // 15
   //#define LCD_PINS_D5         141
   //#define LCD_PINS_D6         142
   //#define LCD_PINS_D7         143
-  #define BEEPER_PIN          16
+  #define BEEPER_PIN          152
 
 #endif
 
@@ -139,14 +145,14 @@
 // LCD Display input pins
 //
 #if ENABLED(CR10_STOCKDISPLAY)
-  #define BTN_EN1             12
-  #define BTN_EN2             14
-  #define BTN_ENC             22
+  #define BTN_EN1             0 // 12
+  #define BTN_EN2             12 // 14
+  #define BTN_ENC             14 // 13
   #define REVERSE_MENU_DIRECTION
 
 #elif ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER)
-  #define BTN_EN1             12
-  #define BTN_EN2             14
-  #define BTN_ENC             22
+  #define BTN_EN1             0 // 12
+  #define BTN_EN2             12 // 14
+  #define BTN_ENC             14 // 13
 
 #endif
