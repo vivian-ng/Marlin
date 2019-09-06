@@ -130,7 +130,7 @@
 
 // Choose the name from boards.h that matches your setup
 #ifndef MOTHERBOARD
-  #define MOTHERBOARD BOARD_RAMPS_14_EFB
+  #define MOTHERBOARD BOARD_ESP32
 #endif
 
 // Name displayed in the LCD "Ready" message and Info menu
@@ -1400,7 +1400,7 @@
  *   M501 - Read settings from EEPROM. (i.e., Throw away unsaved changes)
  *   M502 - Revert settings to "factory" defaults. (Follow with M500 to init the EEPROM.)
  */
-//#define EEPROM_SETTINGS     // Persistent storage with M500 and M501
+#define EEPROM_SETTINGS     // Persistent storage with M500 and M501
 //#define DISABLE_M503        // Saves ~2700 bytes of PROGMEM. Disable for release!
 #define EEPROM_CHITCHAT       // Give feedback on EEPROM commands. Disable to save PROGMEM.
 #if ENABLED(EEPROM_SETTINGS)
@@ -1617,7 +1617,7 @@
  * you must uncomment the following option or it won't work.
  *
  */
-//#define SDSUPPORT
+#define SDSUPPORT
 
 /**
  * SD CARD: SPI SPEED
@@ -1625,7 +1625,7 @@
  * Enable one of the following items for a slower SPI transfer speed.
  * This may be required to resolve "volume init" errors.
  */
-//#define SPI_SPEED SPI_HALF_SPEED
+#define SPI_SPEED SPI_HALF_SPEED
 //#define SPI_SPEED SPI_QUARTER_SPEED
 //#define SPI_SPEED SPI_EIGHTH_SPEED
 
