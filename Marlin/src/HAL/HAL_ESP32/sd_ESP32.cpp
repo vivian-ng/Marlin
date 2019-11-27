@@ -53,7 +53,7 @@ bool ESP_SD::isopen(){
 }
 
 int8_t ESP_SD::card_status(){
-if (!IS_SD_INSERTED() || !card.isDetected()) return 0; //No sd
+if (!IS_SD_INSERTED() || !card.isMounted()) return 0; //No sd
 if ( card.isPrinting() || card.isFileOpen() ) return -1; // busy
 return 1; //ok
 }

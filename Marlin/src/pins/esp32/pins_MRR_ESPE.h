@@ -33,9 +33,8 @@
   "Oops! Select an ESP32 board in 'Tools > Board.'"
 #endif
 
-#ifndef BOARD_NAME
-  #define BOARD_NAME "MRR ESPE"
-#endif
+#define BOARD_INFO_NAME "MRR ESPE"
+#define BOARD_WEBSITE_URL "github.com/maplerainresearch/MRR_ESPA"
 
 //
 // Limit Switches

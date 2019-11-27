@@ -2230,7 +2230,11 @@ int32_t Stepper::position(const AxisEnum axis) {
 // Stepper ISR (this CAN happen with the endstop limits ISR) then
 // when the stepper ISR resumes, we must be very sure that the movement
 // is properly cancelled
+#ifdef ARDUINO_ARCH_ESP32 // avoid float operation on ESP32 during interrupts
 void IRAM_ATTR Stepper::endstop_triggered(const AxisEnum axis) {
+#else
+void Stepper::endstop_triggered(const AxisEnum axis) {
+#endif
 
   const bool was_enabled = STEPPER_ISR_ENABLED();
   if (was_enabled) DISABLE_STEPPER_DRIVER_INTERRUPT();
