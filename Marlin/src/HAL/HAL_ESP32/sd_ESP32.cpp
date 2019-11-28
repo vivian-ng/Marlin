@@ -241,8 +241,7 @@ uint32_t ESP_SD::card_used_space(){
 
 bool ESP_SD::openDir(String path){
     static SdFile root;
-    static 
-    String name;
+    static String name;
     int index = 0;
     //SdFile *parent;
     if(root.isOpen())root.close();
