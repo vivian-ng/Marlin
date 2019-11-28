@@ -86,6 +86,10 @@
 #define E3_ENABLE_PIN      140
 //#define E0_CS_PIN          22
 
+#define Z2_STEP_PIN        141
+#define Z2_DIR_PIN         142
+#define Z2_ENABLE_PIN      140
+//#define Z2_CS_PIN            5
 
 //
 // Temperature Sensors
@@ -102,8 +106,8 @@
 #define HEATER_BED_PIN     144 // 4
 
 #define CONTROLLER_FAN_PIN 147
-#define E0_AUTO_FAN_PIN 148
-//#define E1_AUTO_FAN_PIN 149
+//#define E0_AUTO_FAN_PIN 148 // need to update Configuration_adv.h @section extruder 
+//#define E1_AUTO_FAN_PIN 149 // need to update Configuration_adv.h @section extruder 
 #define FAN1_PIN 149
 
 //
@@ -112,7 +116,6 @@
 #define MOSI_PIN           23
 #define MISO_PIN           19
 #define SCK_PIN            18
-#define SS_PIN              5
 #define SDSS                5
 
 //////////////////////////

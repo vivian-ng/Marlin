@@ -244,7 +244,7 @@ bool ESP_SD::openDir(String path){
     static 
     String name;
     int index = 0;
-    SdFile *parent;
+    //SdFile *parent;
     if(root.isOpen())root.close();
     if (!sd_volume.init(&(card.getSd2Card()))) {
         return false;
@@ -254,7 +254,7 @@ bool ESP_SD::openDir(String path){
     }
     root.rewind();
     workDir = root;
-    parent = &workDir;
+    //parent = &workDir;
     name = get_path_part(path,index);
     while ((name.length() > 0) && (name!="/")) {
         SdFile newDir;
@@ -262,7 +262,7 @@ bool ESP_SD::openDir(String path){
             return false;
             }
          workDir=newDir;
-         parent = &workDir;
+         //parent = &workDir;
          index++;
          if (index > MAX_DIR_DEPTH) {
             return false;
