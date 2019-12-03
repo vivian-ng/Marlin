@@ -150,7 +150,6 @@
   #define BTN_EN1             0
   #define BTN_EN2             12
   #define BTN_ENC             14
-  #define REVERSE_MENU_DIRECTION
 
 #elif ENABLED(REPRAP_DISCOUNT_FULL_GRAPHIC_SMART_CONTROLLER)
   #define BTN_EN1             0
